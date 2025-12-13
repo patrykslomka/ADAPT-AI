@@ -1,0 +1,594 @@
+{
+  "version": "1.0",
+  "last_updated": "2024-12-13",
+  "diseases": [
+    {
+      "id": "tuberculosis",
+      "name": "Tuberculosis (TB)",
+      "category": "Infectious Disease",
+      "icd10": "A15.0",
+      "description": "Bacterial infection caused by Mycobacterium tuberculosis primarily affecting lungs",
+      "typical_symptoms": [
+        "chronic_cough",
+        "hemoptysis",
+        "night_sweats",
+        "weight_loss",
+        "fever",
+        "fatigue"
+      ],
+      "risk_factors": [
+        "hiv_infection",
+        "immunosuppression",
+        "endemic_travel",
+        "close_contact_with_tb",
+        "crowded_living",
+        "malnutrition"
+      ],
+      "diagnostic_tests": [
+        {
+          "test": "chest_xray",
+          "purpose": "Identify lung infiltrates or cavitations",
+          "sensitivity": 0.87,
+          "specificity": 0.89
+        },
+        {
+          "test": "sputum_afb_smear",
+          "purpose": "Microscopy for acid-fast bacilli",
+          "sensitivity": 0.50,
+          "specificity": 0.99
+        },
+        {
+          "test": "tuberculin_skin_test",
+          "purpose": "PPD skin test for TB exposure",
+          "sensitivity": 0.77,
+          "specificity": 0.97
+        },
+        {
+          "test": "igra_blood_test",
+          "purpose": "Interferon-gamma release assay",
+          "sensitivity": 0.90,
+          "specificity": 0.95
+        },
+        {
+          "test": "sputum_culture",
+          "purpose": "Gold standard for TB diagnosis",
+          "sensitivity": 0.80,
+          "specificity": 0.98,
+          "turnaround": "2-8 weeks"
+        }
+      ],
+      "first_line_treatment": [
+        "rifampin",
+        "isoniazid",
+        "pyrazinamide",
+        "ethambutol"
+      ],
+      "treatment_duration": "6-9 months",
+      "treatment_phases": {
+        "intensive": "2 months (4 drugs)",
+        "continuation": "4-7 months (2 drugs)"
+      },
+      "complications": [
+        "meningitis",
+        "miliary_tb",
+        "bone_tb",
+        "renal_tb"
+      ],
+      "reporting_required": true,
+      "isolation_required": true,
+      "isolation_duration": "Until 3 negative sputum samples",
+      "guidelines_source": "CDC TB Treatment Guidelines 2023"
+    },
+    {
+      "id": "pneumonia_cap",
+      "name": "Community-Acquired Pneumonia (CAP)",
+      "category": "Infectious Disease",
+      "icd10": "J18.9",
+      "description": "Acute infection of lung parenchyma acquired outside healthcare setting",
+      "typical_symptoms": [
+        "cough",
+        "fever",
+        "dyspnea",
+        "chest_pain",
+        "sputum_production"
+      ],
+      "risk_factors": [
+        "age_over_65",
+        "chronic_lung_disease",
+        "smoking",
+        "immunosuppression",
+        "recent_viral_infection"
+      ],
+      "diagnostic_tests": [
+        {
+          "test": "chest_xray",
+          "purpose": "Identify infiltrate",
+          "sensitivity": 0.85,
+          "specificity": 0.82
+        },
+        {
+          "test": "wbc_count",
+          "purpose": "Assess inflammatory response",
+          "sensitivity": 0.70,
+          "specificity": 0.65
+        },
+        {
+          "test": "sputum_culture",
+          "purpose": "Identify causative organism",
+          "sensitivity": 0.60,
+          "specificity": 0.95
+        },
+        {
+          "test": "blood_culture",
+          "purpose": "Detect bacteremia",
+          "sensitivity": 0.25,
+          "specificity": 0.98
+        }
+      ],
+      "severity_scores": ["curb65", "psi"],
+      "first_line_treatment": [
+        "amoxicillin",
+        "azithromycin",
+        "doxycycline"
+      ],
+      "alternative_treatment": [
+        "levofloxacin",
+        "moxifloxacin"
+      ],
+      "treatment_duration": "5-7 days",
+      "hospitalization_criteria": [
+        "CURB-65 >= 2",
+        "PSI Class IV-V",
+        "Hypoxemia",
+        "Hemodynamic instability"
+      ],
+      "guidelines_source": "IDSA/ATS CAP Guidelines 2019"
+    },
+    {
+      "id": "myocardial_infarction_stemi",
+      "name": "ST-Elevation Myocardial Infarction (STEMI)",
+      "category": "Cardiovascular",
+      "icd10": "I21.3",
+      "description": "Acute coronary syndrome with complete coronary artery occlusion",
+      "typical_symptoms": [
+        "chest_pain",
+        "diaphoresis",
+        "nausea",
+        "dyspnea",
+        "radiation_to_arm"
+      ],
+      "risk_factors": [
+        "hypertension",
+        "diabetes",
+        "hyperlipidemia",
+        "smoking",
+        "family_history_cad",
+        "age"
+      ],
+      "diagnostic_tests": [
+        {
+          "test": "ecg_12_lead",
+          "purpose": "ST elevation in contiguous leads",
+          "sensitivity": 0.90,
+          "specificity": 0.95,
+          "critical": true
+        },
+        {
+          "test": "troponin",
+          "purpose": "Myocardial injury marker",
+          "sensitivity": 0.95,
+          "specificity": 0.90
+        },
+        {
+          "test": "coronary_angiography",
+          "purpose": "Definitive diagnosis and intervention",
+          "sensitivity": 1.0,
+          "specificity": 1.0
+        }
+      ],
+      "immediate_treatment": [
+        "aspirin_325mg",
+        "nitroglycerin",
+        "morphine",
+        "oxygen_if_hypoxic"
+      ],
+      "definitive_treatment": "PCI within 90 minutes or thrombolytics within 30 minutes",
+      "time_critical": true,
+      "door_to_balloon_target": "90 minutes",
+      "contraindications_thrombolytics": [
+        "active_bleeding",
+        "recent_surgery",
+        "stroke_within_3_months",
+        "intracranial_hemorrhage_history"
+      ],
+      "guidelines_source": "ACC/AHA STEMI Guidelines 2023"
+    },
+    {
+      "id": "diabetic_ketoacidosis",
+      "name": "Diabetic Ketoacidosis (DKA)",
+      "category": "Endocrine",
+      "icd10": "E10.10",
+      "description": "Life-threatening complication of diabetes with hyperglycemia, ketosis, and acidosis",
+      "typical_symptoms": [
+        "polyuria",
+        "polydipsia",
+        "nausea",
+        "vomiting",
+        "abdominal_pain",
+        "altered_mental_status",
+        "kussmaul_respirations"
+      ],
+      "risk_factors": [
+        "type_1_diabetes",
+        "insulin_noncompliance",
+        "infection",
+        "new_onset_diabetes"
+      ],
+      "diagnostic_criteria": [
+        "glucose > 250 mg/dL",
+        "pH < 7.30",
+        "bicarbonate < 18 mEq/L",
+        "positive_ketones"
+      ],
+      "diagnostic_tests": [
+        {
+          "test": "basic_metabolic_panel",
+          "purpose": "Assess electrolytes, glucose, renal function"
+        },
+        {
+          "test": "arterial_blood_gas",
+          "purpose": "Confirm acidosis"
+        },
+        {
+          "test": "serum_ketones",
+          "purpose": "Confirm ketosis"
+        },
+        {
+          "test": "urinalysis",
+          "purpose": "Check for infection, ketones"
+        }
+      ],
+      "treatment_protocol": {
+        "fluids": "Normal saline 1-2 L bolus then 250-500 mL/hr",
+        "insulin": "Regular insulin 0.1 units/kg/hr IV",
+        "potassium": "Replace if K < 5.3 mEq/L",
+        "monitoring": "Hourly glucose, Q2-4hr electrolytes, ABG"
+      },
+      "resolution_criteria": [
+        "glucose < 200 mg/dL",
+        "pH > 7.30",
+        "bicarbonate >= 18 mEq/L"
+      ],
+      "complications": [
+        "cerebral_edema",
+        "hypokalemia",
+        "hypoglycemia"
+      ],
+      "guidelines_source": "ADA DKA Guidelines 2023"
+    },
+    {
+      "id": "stroke_ischemic",
+      "name": "Acute Ischemic Stroke",
+      "category": "Neurological",
+      "icd10": "I63.9",
+      "description": "Sudden loss of blood flow to brain causing neurologic deficit",
+      "typical_symptoms": [
+        "facial_droop",
+        "arm_weakness",
+        "speech_difficulty",
+        "sudden_confusion",
+        "vision_loss",
+        "severe_headache"
+      ],
+      "fast_assessment": {
+        "F": "Face drooping",
+        "A": "Arm weakness",
+        "S": "Speech difficulty",
+        "T": "Time to call 911"
+      },
+      "risk_factors": [
+        "hypertension",
+        "atrial_fibrillation",
+        "diabetes",
+        "hyperlipidemia",
+        "smoking",
+        "prior_stroke_tia"
+      ],
+      "diagnostic_tests": [
+        {
+          "test": "ct_head_noncontrast",
+          "purpose": "Rule out hemorrhage",
+          "critical": true,
+          "timing": "Immediate"
+        },
+        {
+          "test": "ct_angiography",
+          "purpose": "Identify large vessel occlusion"
+        },
+        {
+          "test": "mri_brain",
+          "purpose": "Definitive stroke identification"
+        }
+      ],
+      "time_critical": true,
+      "treatment_windows": {
+        "iv_tpa": "4.5 hours from onset",
+        "mechanical_thrombectomy": "24 hours (selected patients)"
+      },
+      "tpa_contraindications": [
+        "hemorrhagic_stroke",
+        "recent_surgery",
+        "active_bleeding",
+        "platelets_<_100k",
+        "inr_>_1.7"
+      ],
+      "nih_stroke_scale": "Use for severity assessment",
+      "guidelines_source": "AHA/ASA Stroke Guidelines 2023"
+    }
+  ],
+  "symptoms": [
+    {
+      "id": "hemoptysis",
+      "name": "Hemoptysis",
+      "description": "Coughing up blood",
+      "severity": "high",
+      "red_flag": true,
+      "associated_conditions": [
+        "tuberculosis",
+        "lung_cancer",
+        "pulmonary_embolism",
+        "bronchiectasis"
+      ],
+      "immediate_action_required": true,
+      "workup": [
+        "chest_xray",
+        "ct_chest",
+        "bronchoscopy"
+      ]
+    },
+    {
+      "id": "chest_pain",
+      "name": "Chest Pain",
+      "description": "Pain or discomfort in chest",
+      "severity": "variable",
+      "red_flag": true,
+      "associated_conditions": [
+        "myocardial_infarction_stemi",
+        "pulmonary_embolism",
+        "aortic_dissection",
+        "pneumonia_cap"
+      ],
+      "immediate_action_required": true,
+      "triage_questions": [
+        "Onset and duration?",
+        "Quality (crushing, sharp, burning)?",
+        "Radiation?",
+        "Associated symptoms?"
+      ]
+    },
+    {
+      "id": "altered_mental_status",
+      "name": "Altered Mental Status",
+      "description": "Change in consciousness or cognition",
+      "severity": "high",
+      "red_flag": true,
+      "associated_conditions": [
+        "diabetic_ketoacidosis",
+        "stroke_ischemic",
+        "sepsis",
+        "hypoglycemia"
+      ],
+      "immediate_action_required": true
+    },
+    {
+      "id": "chronic_cough",
+      "name": "Chronic Cough",
+      "description": "Cough lasting more than 8 weeks",
+      "severity": "moderate",
+      "red_flag": false,
+      "associated_conditions": [
+        "tuberculosis",
+        "copd",
+        "asthma",
+        "gerd",
+        "lung_cancer"
+      ]
+    },
+    {
+      "id": "fever",
+      "name": "Fever",
+      "description": "Body temperature above 38°C (100.4°F)",
+      "severity": "variable",
+      "red_flag": false,
+      "associated_conditions": [
+        "tuberculosis",
+        "pneumonia_cap",
+        "sepsis",
+        "endocarditis"
+      ]
+    },
+    {
+      "id": "dyspnea",
+      "name": "Dyspnea",
+      "description": "Shortness of breath or difficulty breathing",
+      "severity": "variable",
+      "red_flag": true,
+      "associated_conditions": [
+        "pneumonia_cap",
+        "myocardial_infarction_stemi",
+        "pulmonary_embolism",
+        "heart_failure",
+        "copd_exacerbation"
+      ]
+    },
+    {
+      "id": "night_sweats",
+      "name": "Night Sweats",
+      "description": "Excessive sweating during sleep",
+      "severity": "moderate",
+      "red_flag": false,
+      "associated_conditions": [
+        "tuberculosis",
+        "lymphoma",
+        "hiv",
+        "endocarditis"
+      ]
+    },
+    {
+      "id": "weight_loss",
+      "name": "Unintentional Weight Loss",
+      "description": "Loss of more than 5% body weight without trying",
+      "severity": "moderate",
+      "red_flag": true,
+      "associated_conditions": [
+        "tuberculosis",
+        "malignancy",
+        "diabetes",
+        "hyperthyroidism"
+      ]
+    }
+  ],
+  "treatments": [
+    {
+      "id": "rifampin",
+      "name": "Rifampin",
+      "generic_name": "rifampin",
+      "brand_names": ["Rifadin"],
+      "drug_class": "Antimycobacterial",
+      "indications": ["tuberculosis", "latent_tb"],
+      "mechanism": "Inhibits bacterial RNA synthesis",
+      "typical_dose": "600mg daily (or 10mg/kg)",
+      "max_dose": "600mg/day",
+      "route": "PO",
+      "contraindications": [
+        "severe_liver_disease",
+        "hypersensitivity"
+      ],
+      "common_side_effects": [
+        "orange_discoloration_body_fluids",
+        "hepatotoxicity",
+        "gi_upset",
+        "rash"
+      ],
+      "serious_side_effects": [
+        "hepatotoxicity",
+        "thrombocytopenia"
+      ],
+      "drug_interactions": [
+        {
+          "drug": "warfarin",
+          "effect": "Decreased warfarin efficacy"
+        },
+        {
+          "drug": "oral_contraceptives",
+          "effect": "Decreased contraceptive efficacy"
+        }
+      ],
+      "monitoring": ["liver_function_tests", "cbc"],
+      "pregnancy_category": "C",
+      "counseling_points": [
+        "Take on empty stomach",
+        "Body fluids may turn orange",
+        "Use backup contraception",
+        "Report yellowing of skin/eyes"
+      ]
+    },
+    {
+      "id": "aspirin",
+      "name": "Aspirin",
+      "generic_name": "acetylsalicylic acid",
+      "brand_names": ["Ecotrin", "Bayer"],
+      "drug_class": "Antiplatelet, NSAID",
+      "indications": [
+        "myocardial_infarction_stemi",
+        "stroke_ischemic",
+        "cad_prevention"
+      ],
+      "mechanism": "Irreversibly inhibits COX-1, preventing platelet aggregation",
+      "typical_dose_acute_mi": "325mg (chewed)",
+      "typical_dose_prevention": "81mg daily",
+      "route": "PO",
+      "contraindications": [
+        "active_bleeding",
+        "severe_thrombocytopenia",
+        "aspirin_allergy"
+      ],
+      "common_side_effects": [
+        "gi_upset",
+        "heartburn"
+      ],
+      "serious_side_effects": [
+        "gi_bleeding",
+        "intracranial_hemorrhage"
+      ],
+      "drug_interactions": [
+        {
+          "drug": "warfarin",
+          "effect": "Increased bleeding risk"
+        },
+        {
+          "drug": "ibuprofen",
+          "effect": "Decreased aspirin antiplatelet effect"
+        }
+      ],
+      "monitoring": ["signs_of_bleeding"],
+      "pregnancy_category": "D (third trimester)"
+    },
+    {
+      "id": "amoxicillin",
+      "name": "Amoxicillin",
+      "generic_name": "amoxicillin",
+      "brand_names": ["Amoxil", "Trimox"],
+      "drug_class": "Beta-lactam Antibiotic",
+      "indications": ["pneumonia_cap", "otitis_media", "sinusitis"],
+      "mechanism": "Inhibits bacterial cell wall synthesis",
+      "typical_dose": "500mg TID or 875mg BID",
+      "route": "PO",
+      "contraindications": [
+        "penicillin_allergy",
+        "severe_penicillin_reaction"
+      ],
+      "common_side_effects": [
+        "diarrhea",
+        "nausea",
+        "rash"
+      ],
+      "serious_side_effects": [
+        "anaphylaxis",
+        "c_diff_colitis"
+      ],
+      "drug_interactions": [
+        {
+          "drug": "methotrexate",
+          "effect": "Increased methotrexate toxicity"
+        }
+      ],
+      "monitoring": ["signs_of_allergic_reaction"],
+      "pregnancy_category": "B"
+    },
+    {
+      "id": "insulin_regular",
+      "name": "Regular Insulin",
+      "generic_name": "insulin regular",
+      "brand_names": ["Humulin R", "Novolin R"],
+      "drug_class": "Insulin",
+      "indications": ["diabetic_ketoacidosis", "hyperglycemia"],
+      "mechanism": "Promotes glucose uptake into cells",
+      "typical_dose_dka": "0.1 units/kg/hr IV infusion",
+      "route": "IV, SubQ",
+      "contraindications": [
+        "hypoglycemia"
+      ],
+      "common_side_effects": [
+        "hypoglycemia",
+        "injection_site_reaction"
+      ],
+      "serious_side_effects": [
+        "severe_hypoglycemia",
+        "hypokalemia"
+      ],
+      "monitoring": ["blood_glucose", "potassium"],
+      "pregnancy_category": "B"
+    }
+  ]
+}

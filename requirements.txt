@@ -1,0 +1,53 @@
+# Core LLM & Agents
+anthropic>=0.18.1
+claude-agent-sdk>=0.1.0  # Official Claude Agent SDK
+langchain>=0.1.6
+langchain-anthropic>=0.1.4
+langgraph>=0.0.28
+langsmith>=0.1.7
+
+# MCP (Model Context Protocol)
+mcp>=1.0.0  # MCP Python SDK
+
+# Vector Database
+chromadb>=0.4.22
+
+# Embeddings (using sentence-transformers instead of OpenAI)
+sentence-transformers>=2.2.2
+
+# Data Models & Validation
+pydantic>=2.6.0
+pydantic-settings>=2.1.0
+
+# UI & Visualization
+streamlit>=1.30.0
+plotly>=5.18.0
+streamlit-mermaid>=0.1.0
+pandas>=2.2.0
+
+# Monitoring & Observability
+opentelemetry-api>=1.22.0
+opentelemetry-sdk>=1.22.0
+prometheus-client>=0.19.0
+
+# Storage
+sqlalchemy>=2.0.25
+
+# Utilities
+python-dotenv>=1.0.0
+tiktoken>=0.5.2
+tenacity>=8.2.3
+jsonschema>=4.20.0
+faker>=22.6.0
+python-dateutil>=2.8.2
+
+# Testing
+pytest>=7.4.4
+pytest-asyncio>=0.23.3
+pytest-cov>=4.1.0
+pytest-mock>=3.12.0
+
+# Development
+black>=24.1.1
+mypy>=1.8.0
+ruff>=0.1.14

@@ -1,0 +1,78 @@
+{
+  "version": "1.0",
+  "clinical_decision_support": {
+    "classification": "Clinical Decision Support Software (CDS)",
+    "regulatory_status": "May be exempt from device regulation under Section 520(o)",
+    "requirements": [
+      "Transparent decision-making process",
+      "Clear indication when AI-generated",
+      "Human oversight required for clinical decisions",
+      "Regular validation and monitoring"
+    ]
+  },
+  "ai_ml_specific": {
+    "validation_required": true,
+    "bias_testing_required": true,
+    "continuous_monitoring": true,
+    "version_control": true,
+    "documentation_required": [
+      "Algorithm description",
+      "Training data characteristics",
+      "Performance metrics",
+      "Known limitations"
+    ]
+  },
+  "safety_requirements": {
+    "adverse_event_reporting": {
+      "required": true,
+      "timeline": "Within 30 days for serious events",
+      "includes": [
+        "Death",
+        "Serious injury",
+        "Malfunction leading to harm"
+      ]
+    },
+    "risk_management": {
+      "required": true,
+      "components": [
+        "Hazard analysis",
+        "Risk assessment",
+        "Risk mitigation",
+        "Residual risk evaluation"
+      ]
+    }
+  },
+  "disclaimers": {
+    "required_in_output": [
+      "This is AI-generated clinical decision support",
+      "Not a substitute for professional medical judgment",
+      "Healthcare provider must verify all recommendations",
+      "For informational purposes only"
+    ],
+    "display_requirements": {
+      "prominently_displayed": true,
+      "cannot_be_dismissed": false,
+      "font_size_minimum": "readable"
+    }
+  },
+  "off_label_use": {
+    "allowed": "With appropriate disclaimer",
+    "disclaimer_template": "This information may include off-label uses. Consult FDA-approved labeling and current literature."
+  },
+  "quality_system_requirements": {
+    "design_controls": true,
+    "risk_analysis": true,
+    "verification_testing": true,
+    "validation_testing": true,
+    "change_control": true
+  },
+  "labeling_requirements": {
+    "intended_use": "Clinical decision support for healthcare providers",
+    "contraindications": "Not for use as sole diagnostic tool",
+    "warnings": [
+      "AI recommendations require clinical verification",
+      "System may have knowledge gaps",
+      "Not validated for emergency/critical decisions"
+    ]
+  }
+}

@@ -1,0 +1,97 @@
+{
+  "version": "1.0",
+  "phi_protection": {
+    "protected_identifiers": [
+      "names",
+      "geographic_subdivisions_smaller_than_state",
+      "dates",
+      "phone_numbers",
+      "fax_numbers",
+      "email_addresses",
+      "ssn",
+      "medical_record_numbers",
+      "health_plan_numbers",
+      "account_numbers",
+      "certificate_license_numbers",
+      "vehicle_identifiers",
+      "device_identifiers",
+      "urls",
+      "ip_addresses",
+      "biometric_identifiers",
+      "full_face_photos",
+      "any_unique_identifying_number"
+    ],
+    "validation_rules": [
+      {
+        "rule_id": "HIPAA-001",
+        "description": "Never include patient names in responses",
+        "severity": "critical",
+        "validation_type": "regex",
+        "pattern": "\\b[A-Z][a-z]+ [A-Z][a-z]+\\b",
+        "action": "redact",
+        "replacement": "[PATIENT NAME REDACTED]"
+      },
+      {
+        "rule_id": "HIPAA-002",
+        "description": "Always use patient ID format P-XXXX",
+        "severity": "critical",
+        "validation_type": "format_check",
+        "required_format": "^P-\\d{4}$",
+        "action": "enforce"
+      },
+      {
+        "rule_id": "HIPAA-003",
+        "description": "Never log full MRN",
+        "severity": "critical",
+        "validation_type": "logging_check",
+        "action": "redact_in_logs"
+      },
+      {
+        "rule_id": "HIPAA-004",
+        "description": "Dates must be year only or range",
+        "severity": "high",
+        "validation_type": "date_check",
+        "allowed_precision": ["year", "decade"],
+        "action": "truncate"
+      },
+      {
+        "rule_id": "HIPAA-005",
+        "description": "Never include SSN in any output",
+        "severity": "critical",
+        "validation_type": "regex",
+        "pattern": "\\d{3}-\\d{2}-\\d{4}",
+        "action": "reject"
+      },
+      {
+        "rule_id": "HIPAA-006",
+        "description": "Phone numbers must be redacted",
+        "severity": "critical",
+        "validation_type": "regex",
+        "pattern": "\\(?\\d{3}\\)?[-.]?\\d{3}[-.]?\\d{4}",
+        "action": "redact"
+      }
+    ]
+  },
+  "minimum_necessary": {
+    "principle": "Only access minimum PHI necessary for intended purpose",
+    "enforcement": "Query must include stated purpose",
+    "validation": "Check if requested data matches purpose scope"
+  },
+  "audit_requirements": {
+    "log_access": true,
+    "log_queries": true,
+    "log_phi_viewing": true,
+    "retention_period": "6 years"
+  },
+  "breach_notification": {
+    "threshold": "Unsecured PHI affecting > 500 individuals",
+    "timeline": "Within 60 days of discovery",
+    "notification_required": ["HHS", "Media", "Affected individuals"]
+  },
+  "access_controls": {
+    "authentication_required": true,
+    "role_based_access": true,
+    "session_timeout_minutes": 30,
+    "audit_trail_required": true
+  }
+}
