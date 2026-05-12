@@ -14,7 +14,7 @@ class Settings(BaseSettings):
     langsmith_project: Optional[str] = Field('adapt-ai-poc', alias='LANGSMITH_PROJECT')
 
     # Model Configuration
-    model_name: str = Field('claude-3-5-haiku-20241022', alias='MODEL_NAME')
+    model_name: str = Field('claude-haiku-4-5-20251001', alias='MODEL_NAME')
     max_tokens: int = Field(4000, alias='MAX_TOKENS_PER_REQUEST')
     temperature: float = Field(0.7, alias='MODEL_TEMPERATURE')
 

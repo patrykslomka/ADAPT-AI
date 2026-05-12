@@ -67,3 +67,5 @@ models/
 
 # Jupyter
 .ipynb_checkpoints/
+.claude
+CLAUDE.md

@@ -9,6 +9,7 @@ import logging
 from anthropic import Anthropic
 
 from src.building_blocks.rag import RAGBlock
+from config.settings import settings
 
 logger = logging.getLogger(__name__)
 
@@ -52,7 +53,7 @@ class RATBlock:
     def __init__(
         self,
         rag_block: RAGBlock,
-        model_name: str = "claude-3-5-haiku-20241022",
+        model_name: str = None,
         api_key: str = None,
         max_steps: int = 4
     ):
@@ -60,12 +61,12 @@ class RATBlock:
 
         Args:
             rag_block: RAGBlock instance for retrieval
-            model_name: Claude model to use for reasoning
+            model_name: Claude model to use for reasoning (defaults to settings.model_name)
             api_key: Anthropic API key
             max_steps: Maximum reasoning steps
         """
         self.rag = rag_block
-        self.model_name = model_name
+        self.model_name = model_name or settings.model_name
         self.max_steps = max_steps
 
         # Initialize Anthropic client if API key provided
