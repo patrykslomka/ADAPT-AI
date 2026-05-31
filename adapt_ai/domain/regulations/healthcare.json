@@ -1,0 +1,51 @@
+{
+  "domain": "healthcare",
+  "version": "1.0",
+  "regulations": [
+    {
+      "id": "HIPAA-001",
+      "name": "PHI Non-Disclosure",
+      "category": "privacy",
+      "description": "Protected Health Information must not be disclosed without patient consent",
+      "severity": "critical",
+      "patterns": ["SSN", "social security", "date of birth", "DOB", "home address", "phone number", "email address", "account number", "certificate number", "license number"],
+      "exceptions": ["de-identified", "aggregate", "anonymized", "synthetic", "hypothetical", "case study"]
+    },
+    {
+      "id": "HIPAA-002",
+      "name": "Minimum Necessary Standard",
+      "category": "privacy",
+      "description": "Only the minimum necessary PHI should be used or disclosed",
+      "severity": "high",
+      "patterns": ["full medical record", "complete patient history"],
+      "exceptions": ["treatment", "payment", "operations"]
+    },
+    {
+      "id": "FDA-001",
+      "name": "Off-Label Use Disclosure",
+      "category": "safety",
+      "description": "Off-label drug use must be clearly disclosed",
+      "severity": "high",
+      "patterns": ["off-label", "unapproved indication"],
+      "exceptions": ["with disclosure", "clearly noted", "clinician judgment"]
+    },
+    {
+      "id": "CLINICAL-001",
+      "name": "Medical Disclaimer Required",
+      "category": "safety",
+      "description": "AI-generated clinical content must include provider verification disclaimer",
+      "severity": "medium",
+      "required_phrases": ["verify", "consult", "healthcare provider", "clinical judgment"],
+      "exceptions": ["educational", "exam", "question", "academic", "study", "MCQ", "multiple choice", "USMLE", "test", "quiz"]
+    },
+    {
+      "id": "CLINICAL-002",
+      "name": "Diagnostic Uncertainty",
+      "category": "safety",
+      "description": "Definitive diagnoses should not be stated without appropriate caveats",
+      "severity": "low",
+      "patterns": ["you have", "you are diagnosed with", "patient has"],
+      "exceptions": ["most likely", "consistent with", "differential", "suggests", "indicates", "educational context", "exam question"]
+    }
+  ]
+}

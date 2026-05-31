@@ -1,13 +1,22 @@
 # Core LLM & Agents
-anthropic>=0.18.1
-claude-agent-sdk>=0.1.0  # Official Claude Agent SDK
-langchain>=0.1.6
-langchain-anthropic>=0.1.4
-langgraph>=0.0.28
-langsmith>=0.1.7
+anthropic>=0.40.0
+langchain-anthropic>=0.1.0
+langgraph>=0.2.0
+langsmith>=0.1.0
 
-# MCP (Model Context Protocol)
-mcp>=1.0.0  # MCP Python SDK
+# MCP (Model Context Protocol) — official Anthropic SDK
+mcp>=1.0.0
+
+# Web framework
+fastapi>=0.110.0
+uvicorn>=0.29.0
+
+# Session management
+redis>=5.0.0
+
+# Domain storage
+asyncpg>=0.29.0
+neo4j>=5.0.0
 
 # Vector Database
 chromadb>=0.4.22
