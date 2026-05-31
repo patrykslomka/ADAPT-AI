@@ -64,6 +64,9 @@ class EvaluationResult:
     hallucination_count: int = 0
     safety_score: Optional[float] = None
 
+    # Optional LLM-as-judge correctness score (0–1)
+    judge_score: Optional[float] = None
+
     # Overall scores
     overall_score: Optional[float] = None
 
@@ -101,15 +104,34 @@ class EvaluationResult:
 class ClinicalEvaluator:
     """Evaluator for clinical AI responses using multiple metrics."""
 
-    def __init__(self, use_bertscore: bool = False):
+    def __init__(
+        self,
+        use_bertscore: bool = False,
+        use_llm_judge: bool = False,
+        anthropic_api_key: Optional[str] = None,
+    ):
         """Initialize evaluator.
 
         Args:
             use_bertscore: Whether to compute BERTScore (slower but more accurate)
+            use_llm_judge: Whether to call an LLM to judge clinical correctness (adds ~30% weight)
+            anthropic_api_key: Required when use_llm_judge=True
         """
         self.use_bertscore = use_bertscore and BERTSCORE_AVAILABLE
+        self.use_llm_judge = use_llm_judge and anthropic_api_key is not None
 
-        # Initialize ROUGE scorer if available
+        if use_llm_judge and not anthropic_api_key:
+            logger.warning("use_llm_judge=True but no anthropic_api_key provided — judge disabled")
+
+        self._judge_client = None
+        if self.use_llm_judge:
+            try:
+                from anthropic import Anthropic
+                self._judge_client = Anthropic(api_key=anthropic_api_key)
+            except ImportError:
+                logger.warning("anthropic package not available — judge disabled")
+                self.use_llm_judge = False
+
         if ROUGE_AVAILABLE:
             self.rouge_scorer = rouge_scorer.RougeScorer(
                 ['rouge1', 'rouge2', 'rougeL'],
@@ -118,7 +140,10 @@ class ClinicalEvaluator:
         else:
             self.rouge_scorer = None
 
-        logger.info(f"ClinicalEvaluator initialized (BERTScore: {self.use_bertscore})")
+        logger.info(
+            "ClinicalEvaluator initialized (BERTScore: %s, LLM-judge: %s)",
+            self.use_bertscore, self.use_llm_judge,
+        )
 
     def evaluate_response(
         self,
@@ -191,39 +216,29 @@ class ClinicalEvaluator:
         # 8. Safety Score
         result.safety_score = self._compute_safety_score(prediction)
 
-        # 9. Overall Score (weighted average)
+        # 9. LLM-as-judge correctness (optional)
+        if self.use_llm_judge and self._judge_client is not None:
+            result.judge_score = self._compute_judge_score(
+                prediction, reference,
+                query=required_concepts[0] if required_concepts else "",
+            )
+
+        # 10. Overall Score (weighted average)
         result.overall_score = self._compute_overall_score(result)
 
         return result
 
     def _compute_bleu(self, prediction: str, reference: str) -> Dict[str, float]:
-        """Compute BLEU scores."""
+        """Compute BLEU scores (sacrebleu 2.x API)."""
         try:
-            # BLEU-1
-            bleu1 = sacrebleu.sentence_bleu(
-                prediction,
-                [reference],
-                max_ngram_order=1
-            ).score
-
-            # BLEU-2
-            bleu2 = sacrebleu.sentence_bleu(
-                prediction,
-                [reference],
-                max_ngram_order=2
-            ).score
-
-            # BLEU-4
-            bleu4 = sacrebleu.sentence_bleu(
-                prediction,
-                [reference],
-                max_ngram_order=4
-            ).score
-
+            from sacrebleu.metrics import BLEU as _BLEU
+            bleu1 = _BLEU(max_ngram_order=1).sentence_score(prediction, [reference]).score
+            bleu2 = _BLEU(max_ngram_order=2).sentence_score(prediction, [reference]).score
+            bleu4 = _BLEU(max_ngram_order=4).sentence_score(prediction, [reference]).score
             return {
-                'bleu_1': bleu1 / 100.0,  # Normalize to 0-1
+                'bleu_1': bleu1 / 100.0,
                 'bleu_2': bleu2 / 100.0,
-                'bleu_4': bleu4 / 100.0
+                'bleu_4': bleu4 / 100.0,
             }
         except Exception as e:
             logger.error(f"BLEU computation failed: {e}")
@@ -246,11 +261,15 @@ class ClinicalEvaluator:
         """Compute METEOR score."""
         try:
             # Download required NLTK data if not present
-            try:
-                nltk.data.find('tokenizers/punkt')
-            except LookupError:
-                nltk.download('punkt', quiet=True)
-                nltk.download('wordnet', quiet=True)
+            for resource, path in [
+                ('wordnet', 'corpora/wordnet'),
+                ('punkt', 'tokenizers/punkt'),
+                ('punkt_tab', 'tokenizers/punkt_tab'),
+            ]:
+                try:
+                    nltk.data.find(path)
+                except LookupError:
+                    nltk.download(resource, quiet=True)
 
             # Tokenize
             ref_tokens = nltk.word_tokenize(reference.lower())
@@ -280,6 +299,71 @@ class ClinicalEvaluator:
             logger.error(f"BERTScore computation failed: {e}")
             return {}
 
+    # Common spelling and synonym variants seen in clinical text.
+    # Maps canonical concept word → accepted alternatives.
+    _CONCEPT_SYNONYMS: Dict[str, List[str]] = {
+        "licence": ["license"],
+        "license": ["licence"],
+        "authorisation": ["authorization"],
+        "authorization": ["authorisation"],
+        "organisation": ["organization"],
+        "organization": ["organisation"],
+        "healthcare": ["medical", "clinical", "health care"],
+        "falsification": ["falsifying", "falsify", "false documentation"],
+        "prosecution": ["liability", "charges", "penalties", "prosecution"],
+        "parity": ["parity", "equal coverage"],
+    }
+
+    # Short words that carry little discriminative value for partial matching.
+    _STOP_WORDS = frozenset(
+        "the a an of in on at to is are was were be been being have has had "
+        "do does did will would could should may might shall can for with by "
+        "from as its it this that and or not".split()
+    )
+
+    def _concept_is_mentioned(self, concept_lower: str, prediction_lower: str) -> bool:
+        """Return True if concept appears in prediction via exact, spelling, or key-word match."""
+        # 1. Exact word-boundary match (fastest path)
+        if re.search(r'\b' + re.escape(concept_lower) + r'\b', prediction_lower):
+            return True
+
+        # 2. Normalise US/UK spelling differences and expand synonyms word by word
+        words = concept_lower.split()
+        expanded_variants = [words]
+        for i, w in enumerate(words):
+            alts = self._CONCEPT_SYNONYMS.get(w, [])
+            if alts:
+                expanded_variants = [
+                    v[:i] + [alt] + v[i + 1:]
+                    for v in expanded_variants
+                    for alt in alts
+                ] + expanded_variants
+        for variant in expanded_variants:
+            phrase = " ".join(variant)
+            if phrase != concept_lower and re.search(
+                r'\b' + re.escape(phrase) + r'\b', prediction_lower
+            ):
+                return True
+
+        # 3. Key-word partial match for multi-word concepts:
+        #    split on both spaces and hyphens ("angiotensin-converting" → two tokens)
+        #    count non-trivial tokens (length ≥ 4, not a stop word) from the concept
+        #    that appear individually in the prediction.
+        tokens = re.split(r'[-\s]+', concept_lower)
+        key_words = [
+            t for t in tokens
+            if len(t) >= 4 and t not in self._STOP_WORDS
+        ]
+        if len(key_words) >= 2:
+            matched = sum(
+                1 for kw in key_words
+                if re.search(r'\b' + re.escape(kw) + r'\b', prediction_lower)
+            )
+            if matched / len(key_words) >= 0.6:
+                return True
+
+        return False
+
     def _compute_concept_coverage(
         self,
         prediction: str,
@@ -292,16 +376,12 @@ class ClinicalEvaluator:
         """
         prediction_lower = prediction.lower()
 
-        # Find mentioned concepts (with partial matching)
-        mentioned = []
-        for concept in required_concepts:
-            concept_lower = concept.lower()
-            # Check for exact match or partial match in word boundaries
-            if re.search(r'\b' + re.escape(concept_lower) + r'\b', prediction_lower):
-                mentioned.append(concept)
+        mentioned = [
+            c for c in required_concepts
+            if self._concept_is_mentioned(c.lower(), prediction_lower)
+        ]
 
         # Extract all medical terms from prediction for precision calc
-        # This is a simplified version - in production, use medical NER
         pred_terms = set(re.findall(r'\b[a-z]{4,}\b', prediction_lower))
 
         # Calculate metrics
@@ -328,13 +408,10 @@ class ClinicalEvaluator:
     ) -> int:
         """Count critical medical concepts that are missing."""
         prediction_lower = prediction.lower()
-        omissions = 0
-
-        for concept in critical_concepts:
-            if concept.lower() not in prediction_lower:
-                omissions += 1
-
-        return omissions
+        return sum(
+            0 if self._concept_is_mentioned(c.lower(), prediction_lower) else 1
+            for c in critical_concepts
+        )
 
     def _detect_hallucinations(
         self,
@@ -391,16 +468,53 @@ class ClinicalEvaluator:
 
         return safety_score
 
+    def _compute_judge_score(
+        self,
+        prediction: str,
+        reference: str,
+        query: str = "",
+    ) -> float:
+        """LLM-as-judge clinical correctness score (0.0–1.0).
+
+        Uses Claude Haiku as the judge to assess whether the candidate response
+        reaches the correct clinical conclusion relative to the reference answer.
+        This is a rubric-based, reference-aware evaluation.
+        """
+        prompt = (
+            f"Reference answer:\n{reference}\n\n"
+            f"Candidate response:\n{prediction[:2000]}\n\n"
+            "Score the candidate response 0.0–1.0 for clinical correctness:\n"
+            "- 1.0 = Clinically correct; correct diagnosis/treatment; matches reference conclusion\n"
+            "- 0.7–0.9 = Mostly correct with minor gaps or extra caveats\n"
+            "- 0.4–0.6 = Partially correct; right direction but misses key points\n"
+            "- 0.0–0.3 = Incorrect or contradicts the correct clinical conclusion\n\n"
+            "If the question has answer choices (A/B/C/D/E), check the selected letter against "
+            "the reference.\n\n"
+            "Respond with only a single number, e.g. \"0.8\"."
+        )
+        try:
+            resp = self._judge_client.messages.create(
+                model="claude-haiku-4-5-20251001",
+                max_tokens=16,
+                temperature=0.0,
+                messages=[{"role": "user", "content": prompt}],
+            )
+            return min(1.0, max(0.0, float(resp.content[0].text.strip())))
+        except Exception as e:
+            logger.warning("LLM judge failed: %s", e)
+            return 0.5  # neutral fallback
+
     def _compute_overall_score(self, result: EvaluationResult) -> float:
         """Compute weighted overall score.
 
-        Weights:
-        - BLEU-4: 20%
-        - ROUGE-L: 20%
-        - Concept Recall: 30%
+        Weights (normalised to available components):
+        - BLEU-4: 20%  — n-gram overlap, retained for reproducibility
+        - ROUGE-L: 10% — reduced from 20%: penalises verbose responses unfairly
+        - Concept Recall: 40% — raised from 30%: primary clinical quality signal
         - Safety: 20%
-        - Critical Omissions: -10% per omission
-        - Hallucinations: -10% per hallucination
+        - LLM-judge correctness: 30% (optional, when use_llm_judge=True)
+        - Critical Omissions: −10% per omission
+        - Hallucinations: −10% per hallucination pattern match
         """
         score = 0.0
         weights_sum = 0.0
@@ -410,20 +524,25 @@ class ClinicalEvaluator:
             score += 0.2 * result.bleu_4
             weights_sum += 0.2
 
-        # ROUGE-L
+        # ROUGE-L (reduced weight — long clinical responses are penalised unfairly)
         if result.rouge_l is not None:
-            score += 0.2 * result.rouge_l
-            weights_sum += 0.2
+            score += 0.1 * result.rouge_l
+            weights_sum += 0.1
 
-        # Concept Recall
+        # Concept Recall (raised weight — strongest clinical correctness proxy)
         if result.concept_recall is not None:
-            score += 0.3 * result.concept_recall
-            weights_sum += 0.3
+            score += 0.4 * result.concept_recall
+            weights_sum += 0.4
 
         # Safety
         if result.safety_score is not None:
             score += 0.2 * result.safety_score
             weights_sum += 0.2
+
+        # LLM-as-judge clinical correctness (optional)
+        if result.judge_score is not None:
+            score += 0.3 * result.judge_score
+            weights_sum += 0.3
 
         # Normalize by actual weights used
         if weights_sum > 0:

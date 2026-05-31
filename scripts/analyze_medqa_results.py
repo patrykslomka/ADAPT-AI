@@ -132,17 +132,39 @@ def main() -> None:
         print(f"  ADAPT-AI is {adapt_avg_t/base_avg_t:.1f}× slower than Baseline")
 
     # ── cost ──────────────────────────────────────────────────────────────────
-    base_costs  = [r["baseline"]["cost"]  for r in results if r["baseline"].get("cost") is not None]
-    adapt_costs = [r["adapt_ai"]["cost"]  for r in results if r["adapt_ai"].get("cost") is not None]
+    base_costs  = [r["baseline"]["cost"] for r in results if r["baseline"].get("cost") is not None]
+    adapt_costs = [r["adapt_ai"]["total_cost_usd"] for r in results if r["adapt_ai"].get("total_cost_usd") is not None]
 
     print(f"\n{'─'*60}")
     print("Cost (USD)")
     print(f"{'─'*60}")
-    if base_costs:
-        print(f"  Baseline total   : ${sum(base_costs):.4f}  (avg ${safe_mean(base_costs):.6f}/q)")
     if adapt_costs:
-        print(f"  ADAPT-AI extractor cost (letter extraction only): ${sum(adapt_costs):.4f}")
-        print(f"  Note: ADAPT-AI orchestrator internal LLM costs are not exposed in result metadata.")
+        adapt_total = sum(adapt_costs)
+        adapt_avg = adapt_total / len(adapt_costs)
+        print(f"  ADAPT-AI total   : ${adapt_total:.4f}  (avg ${adapt_avg:.6f}/q, {len(adapt_costs)} questions)")
+    else:
+        print("  ADAPT-AI cost    : not available")
+    if base_costs:
+        base_total = sum(base_costs)
+        base_avg = base_total / len(base_costs)
+        print(f"  Baseline total   : ${base_total:.4f}  (avg ${base_avg:.6f}/q)")
+    if adapt_costs and base_costs:
+        ratio = (sum(adapt_costs) / len(adapt_costs)) / (sum(base_costs) / len(base_costs))
+        print(f"  ADAPT-AI is {ratio:.1f}× more expensive per question than Baseline")
+
+    # ── null answer analysis ───────────────────────────────────────────────────
+    null_results = [
+        r for r in results
+        if r["adapt_ai"]["letter"] is None or r["baseline"]["letter"] is None
+    ]
+    if null_results:
+        print(f"\n{'─'*60}")
+        print(f"Null Answers ({len(null_results)} questions — excluded from accuracy)")
+        print(f"{'─'*60}")
+        for r in null_results:
+            err = r["adapt_ai"].get("error") or r["baseline"].get("error") or "unknown"
+            err_short = err[:80] if err else "unknown"
+            print(f"  Q{r['id']:3d}: adapt={r['adapt_ai']['letter']}  base={r['baseline']['letter']}  err={err_short}")
 
     # ── divergence analysis ───────────────────────────────────────────────────
     only_adapt = [r for r in results if r["adapt_ai"]["correct"] and not r["baseline"]["correct"]]
@@ -186,7 +208,8 @@ def main() -> None:
             "ci_95_lower": round(adapt_ci[0], 4),
             "ci_95_upper": round(adapt_ci[1], 4),
             "avg_time_s": round(adapt_avg_t, 3) if adapt_avg_t else None,
-            "extractor_total_cost_usd": round(sum(adapt_costs), 6) if adapt_costs else None,
+            "total_cost_usd": round(sum(adapt_costs), 6) if adapt_costs else None,
+            "avg_cost_per_q_usd": round(sum(adapt_costs) / len(adapt_costs), 6) if adapt_costs else None,
         },
         "baseline": {
             "n_correct": base_n,
@@ -195,7 +218,12 @@ def main() -> None:
             "ci_95_upper": round(base_ci[1], 4),
             "avg_time_s": round(base_avg_t, 3) if base_avg_t else None,
             "total_cost_usd": round(sum(base_costs), 6) if base_costs else None,
+            "avg_cost_per_q_usd": round(sum(base_costs) / len(base_costs), 6) if base_costs else None,
         },
+        "cost_ratio": round(
+            (sum(adapt_costs) / len(adapt_costs)) / (sum(base_costs) / len(base_costs)), 2
+        ) if adapt_costs and base_costs else None,
+        "n_null_answers": len(null_results),
         "delta_accuracy": round(delta, 4),
         "mcnemar": {
             "b_adapt_correct_base_wrong": b,
@@ -212,6 +240,9 @@ def main() -> None:
                 "adapt_ai_letter": r["adapt_ai"]["letter"],
                 "adapt_ai_correct": r["adapt_ai"]["correct"],
                 "adapt_ai_time": r["adapt_ai"]["time"],
+                "adapt_ai_cost_usd": r["adapt_ai"].get("total_cost_usd"),
+                "adapt_ai_use_rat": r["adapt_ai"].get("use_rat"),
+                "adapt_ai_revision_count": r["adapt_ai"].get("revision_count"),
                 "baseline_letter": r["baseline"]["letter"],
                 "baseline_correct": r["baseline"]["correct"],
                 "baseline_time": r["baseline"]["time"],
@@ -227,7 +258,7 @@ def main() -> None:
     # ── Markdown summary ──────────────────────────────────────────────────────
     md = f"""# MedQA Benchmark Summary
 
-**Model**: `claude-3-5-haiku-20241022`
+**Model**: `claude-haiku-4-5-20251001`
 **Questions**: {n} (random sample from MedQA US 5-option USMLE test set, seed=42)
 
 ## Accuracy
@@ -257,10 +288,12 @@ def main() -> None:
 
 {"ADAPT-AI is **" + f"{adapt_avg_t/base_avg_t:.1f}×**" + " slower than Baseline." if adapt_avg_t and base_avg_t else ""}
 
-> **Note on ADAPT-AI cost**: The orchestrator's internal LLM calls (Primary Agent, Quality Agent)
-> are not directly exposed in the returned metadata. Only the letter-extractor call cost is
-> captured ({f'${sum(adapt_costs):.4f} total' if adapt_costs else 'N/A'}).
-> Baseline total cost: {f'${sum(base_costs):.4f}' if base_costs else 'N/A'}.
+## Cost
+
+| System | Total | Per question | vs Baseline |
+|--------|-------|--------------|-------------|
+| ADAPT-AI | {f"${sum(adapt_costs):.4f}" if adapt_costs else "N/A"} | {f"${sum(adapt_costs)/len(adapt_costs):.6f}" if adapt_costs else "N/A"} | {"**" + f"{(sum(adapt_costs)/len(adapt_costs))/(sum(base_costs)/len(base_costs)):.1f}×**" if adapt_costs and base_costs else "N/A"} |
+| Baseline | {f"${sum(base_costs):.4f}" if base_costs else "N/A"} | {f"${sum(base_costs)/len(base_costs):.6f}" if base_costs else "N/A"} | 1× |
 
 ## Divergence
 
@@ -269,15 +302,16 @@ def main() -> None:
 
 ## Architecture Notes
 
-**ADAPT-AI pipeline** runs three agents in sequence:
-1. **Primary Agent** — clinical reasoning via RAG (ChromaDB) or RAT (multi-step retrieval)
-2. **Compliance Agent** — HIPAA/FDA rule-based validation
-3. **Quality Agent** — hallucination detection with one retry loop if needed
+**ADAPT-AI pipeline** (LangGraph + FastMCP) runs five nodes in sequence:
+1. **intent_and_retrieve** — routes to RAT (complex vignettes) or RAG (simple queries) via MCP tools
+2. **Primary Agent** — clinical reasoning with RAT/RAG context; outputs `ANSWER: X` directly
+3. **Compliance Agent** — HIPAA/FDA rule-based validation via MCP `validate_output_tool`
+4. **Quality Agent** — hallucination detection (score ≥ 0.6 passes); one retry loop if needed
+5. **aggregate_response** — merges outputs and appends medical disclaimer
 
-The primary agent's answer is then passed to a separate letter-extractor LLM call
-to convert clinical prose into a single answer letter.
+The primary agent outputs `ANSWER: X` inline — no separate extractor call needed.
 
-**Baseline pipeline** is a single `claude-3-5-haiku-20241022` call with a CoT system prompt,
+**Baseline pipeline** is a single `claude-haiku-4-5-20251001` call with a CoT system prompt,
 extracting `ANSWER: X` from the response.
 """
 

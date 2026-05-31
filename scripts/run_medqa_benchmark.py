@@ -26,8 +26,12 @@ from dotenv import load_dotenv
 load_dotenv(Path(__file__).parent.parent / ".env")
 
 from anthropic import Anthropic
-from config.settings import settings
-from src.mcp.orchestrator import MCPOrchestrator
+from adapt_ai.config import settings
+from adapt_ai.orchestrator.client import build_mcp_client
+from adapt_ai.agents.graph import build_graph
+from adapt_ai.llmops.tracing import setup_tracing
+
+setup_tracing()
 
 # ── paths ──────────────────────────────────────────────────────────────────────
 DATA_DIR = Path(__file__).parent.parent / "data" / "evaluation"
@@ -35,27 +39,34 @@ SAMPLE_PATH = DATA_DIR / "medqa_sample.json"
 RESULTS_PATH = DATA_DIR / "medqa_results.json"
 
 # ── pricing (claude-haiku-4-5-20251001, per token) ───────────────────────────
-HAIKU_INPUT_PRICE = 0.80 / 1_000_000   # $ per input token
-HAIKU_OUTPUT_PRICE = 4.00 / 1_000_000  # $ per output token
+HAIKU_INPUT_PRICE = 0.80 / 1_000_000
+HAIKU_OUTPUT_PRICE = 4.00 / 1_000_000
 
-SLEEP_BETWEEN_QUESTIONS = 2  # seconds
+SLEEP_BETWEEN_QUESTIONS = 1  # seconds (reduced — new pipeline is faster)
 
-logging.basicConfig(
-    level=logging.WARNING,  # suppress agent-level chatter during benchmark
-    format="%(levelname)s: %(message)s",
+# Substrings in error messages that mean "stop now, not a transient failure"
+_RATE_LIMIT_SIGNALS = (
+    "usage limits",
+    "rate limit",
+    "rate_limit_error",
+    "overloaded",
+    "529",
 )
+
+logging.basicConfig(level=logging.WARNING, format="%(levelname)s: %(message)s")
 logger = logging.getLogger(__name__)
 
 
-# ── helpers ────────────────────────────────────────────────────────────────────
+class RateLimitAbort(Exception):
+    """Raised when a hard usage/rate-limit error is detected mid-benchmark."""
+
 
 def format_question(q: dict) -> str:
-    """Format a MedQA question dict into a clinical vignette string."""
     opts = "\n".join(f"  {k}. {v}" for k, v in q["options"].items())
     return (
         f"Clinical Question:\n{q['question']}\n\n"
         f"Answer choices:\n{opts}\n\n"
-        "Which answer choice is correct?"
+        "Which answer choice is correct? Think step by step, then end with: ANSWER: X"
     )
 
 
@@ -63,116 +74,108 @@ def compute_cost(input_tokens: int, output_tokens: int) -> float:
     return input_tokens * HAIKU_INPUT_PRICE + output_tokens * HAIKU_OUTPUT_PRICE
 
 
-def extract_letter_regex(text: str) -> str | None:
-    """Extract answer letter from 'ANSWER: X' pattern with regex fallback."""
+def extract_letter(text: str) -> str | None:
+    """Extract answer letter — prefers explicit 'ANSWER: X' pattern."""
     m = re.search(r"ANSWER\s*:\s*([A-Ea-e])", text)
     if m:
         return m.group(1).upper()
-    # Fallback: last standalone letter A-E in the text
+    # Fallback: last standalone letter A-E
     letters = re.findall(r"\b([A-Ea-e])\b", text)
     return letters[-1].upper() if letters else None
 
 
-# ── pipeline 1: ADAPT-AI ──────────────────────────────────────────────────────
+# ── pipeline 1: ADAPT-AI (new LangGraph architecture) ────────────────────────
 
-async def run_adapt_ai(
-    orchestrator: MCPOrchestrator,
-    client: Anthropic,
-    formatted_q: str,
-    options: dict,
-) -> dict:
-    """Run question through ADAPT-AI, then extract a letter with a second LLM call."""
+def _is_rate_limit(err: str) -> bool:
+    err_lower = err.lower()
+    return any(signal in err_lower for signal in _RATE_LIMIT_SIGNALS)
+
+
+async def run_adapt_ai(pipeline, formatted_q: str, options: dict, q_id: int) -> dict:
     t0 = time.perf_counter()
     try:
-        result = await orchestrator.process_query(query=formatted_q, patient_id=None)
-    except Exception as e:
-        logger.error("ADAPT-AI orchestrator error: %s", e)
-        return {"letter": None, "time": time.perf_counter() - t0, "cost": None, "error": str(e)}
-
-    pipeline_time = time.perf_counter() - t0
-
-    if result.get("status") != "success":
-        return {
-            "letter": None,
-            "time": pipeline_time,
-            "cost": None,
-            "status": result.get("status"),
-        }
-
-    content = result["content"]
-
-    # Letter extractor: give the model the actual answer choices so it can
-    # match the clinical reasoning to the correct option rather than guessing.
-    options_text = "\n".join(f"  {k}. {v}" for k, v in options.items())
-    try:
-        extract_resp = client.messages.create(
-            model=settings.model_name,
-            max_tokens=10,
-            temperature=0.0,
-            system="You are a medical exam answer extractor. Given clinical reasoning and a set of answer choices, output the single letter (A, B, C, D, or E) that best matches the reasoning. Output only the letter, nothing else.",
-            messages=[
-                {
-                    "role": "user",
-                    "content": (
-                        f"Answer choices:\n{options_text}\n\n"
-                        f"Clinical reasoning:\n{content}\n\n"
-                        "Which answer choice letter (A, B, C, D, or E) does this reasoning support? "
-                        "Output only the letter."
-                    ),
-                }
-            ],
-        )
-        letter_text = extract_resp.content[0].text.strip()
-        m = re.search(r"[A-Ea-e]", letter_text)
-        letter = m.group(0).upper() if m else None
-        extractor_cost = compute_cost(
-            extract_resp.usage.input_tokens,
-            extract_resp.usage.output_tokens,
+        result = await pipeline.ainvoke(
+            {
+                "query": formatted_q,
+                "patient_id": None,
+                "domain": "healthcare",
+                "session_id": f"benchmark-{q_id}",
+                "use_rat": False,
+                "retrieved_context": "",
+                "primary_response": "",
+                "compliance_result": {},
+                "quality_result": {},
+                "final_response": "",
+                "revision_count": 0,
+                "revision_feedback": "",
+                "agent_statuses": {},
+                "llm_usage": None,
+                "error": None,
+            },
+            config={"configurable": {"thread_id": f"bench-{q_id}"}},
         )
     except Exception as e:
-        logger.error("Letter extractor error: %s", e)
-        letter = None
-        extractor_cost = None
+        elapsed = time.perf_counter() - t0
+        err_str = str(e)
+        logger.error("ADAPT-AI pipeline error q%d: %s", q_id, err_str)
+        if _is_rate_limit(err_str):
+            raise RateLimitAbort(err_str) from e
+        return {"letter": None, "time": round(elapsed, 3), "cost": None, "error": err_str}
 
-    total_time = time.perf_counter() - t0
+    elapsed = time.perf_counter() - t0
+
+    pipeline_err = result.get("error")
+    if pipeline_err:
+        if _is_rate_limit(str(pipeline_err)):
+            raise RateLimitAbort(str(pipeline_err))
+        return {"letter": None, "time": round(elapsed, 3), "cost": None, "error": pipeline_err}
+
+    response_text = result.get("final_response") or result.get("primary_response", "")
+    letter = extract_letter(response_text)
+
+    usage = result.get("llm_usage") or {}
     return {
         "letter": letter,
-        "time": round(total_time, 3),
-        "cost": extractor_cost,  # only extractor cost; orchestrator internal costs not exposed
-        "orchestrator_status": result.get("status"),
-        "pipeline_time": round(pipeline_time, 3),
+        "correct": None,  # filled in by caller
+        "time": round(elapsed, 3),
+        "total_cost_usd": usage.get("total_cost_usd"),
+        "total_input_tokens": usage.get("total_input_tokens"),
+        "total_output_tokens": usage.get("total_output_tokens"),
+        "pipeline_time": round(elapsed, 3),
+        "orchestrator_status": "success",
+        "use_rat": result.get("use_rat", False),
+        "revision_count": result.get("revision_count", 0),
+        "agent_statuses": result.get("agent_statuses", {}),
+        "error": None,
     }
 
 
 # ── pipeline 2: monolithic baseline ──────────────────────────────────────────
 
 def run_baseline(client: Anthropic, formatted_q: str) -> dict:
-    """Call Claude Haiku directly with CoT reasoning."""
     t0 = time.perf_counter()
     try:
         resp = client.messages.create(
             model=settings.model_name,
             max_tokens=1024,
-            temperature=0.7,
+            temperature=0.3,
             system="You are a clinical expert. Reason through the question carefully, then output your final answer.",
             messages=[
                 {
                     "role": "user",
-                    "content": (
-                        formatted_q
-                        + "\n\nThink step by step, then on the last line write: "
-                        "ANSWER: X (where X is A, B, C, D, or E)"
-                    ),
+                    "content": formatted_q,
                 }
             ],
         )
     except Exception as e:
-        logger.error("Baseline error: %s", e)
-        return {"letter": None, "time": time.perf_counter() - t0, "cost": None, "error": str(e)}
+        err_str = str(e)
+        if _is_rate_limit(err_str):
+            raise RateLimitAbort(err_str) from e
+        return {"letter": None, "time": round(time.perf_counter() - t0, 3), "cost": None, "error": err_str}
 
     elapsed = time.perf_counter() - t0
     text = resp.content[0].text
-    letter = extract_letter_regex(text)
+    letter = extract_letter(text)
     cost = compute_cost(resp.usage.input_tokens, resp.usage.output_tokens)
 
     return {
@@ -184,111 +187,115 @@ def run_baseline(client: Anthropic, formatted_q: str) -> dict:
     }
 
 
+def _completed_ids(results: list[dict]) -> set:
+    """IDs that finished WITHOUT error on either pipeline. Errored entries are
+    intentionally excluded so --resume re-runs them (e.g. after a usage-cap abort)."""
+    done = set()
+    for r in results:
+        if r.get("adapt_ai", {}).get("error") or r.get("baseline", {}).get("error"):
+            continue
+        done.add(r["id"])
+    return done
+
+
 # ── main loop ─────────────────────────────────────────────────────────────────
 
-async def benchmark(questions: list[dict], resume: bool) -> None:
+async def benchmark(questions: list[dict], resume: bool, include_quality: bool = True) -> None:
     client = Anthropic(api_key=settings.anthropic_api_key.get_secret_value())
-    orchestrator = MCPOrchestrator()
 
-    # Load any existing partial results
+    print("Initialising ADAPT-AI pipeline (LangGraph + MCP)…")
+    mcp_client = build_mcp_client()
+    pipeline = build_graph(mcp_client, include_quality=include_quality)
+    print("Pipeline ready.\n")
+
     results: list[dict] = []
     if resume and RESULTS_PATH.exists():
         results = json.loads(RESULTS_PATH.read_text(encoding="utf-8"))
         print(f"Resuming from {len(results)} completed questions.")
 
-    done_ids = {r["id"] for r in results}
+    done_ids = _completed_ids(results)
+    results = [r for r in results if r["id"] in done_ids]
+    todo = [q for q in questions if q["id"] not in done_ids]
 
-    for q in questions:
-        if q["id"] in done_ids:
-            continue
+    total = len(questions)
 
-        formatted_q = format_question(q)
-        correct = q["answer"]
+    try:
+        for q in todo:
+            q_id = q["id"]
+            correct = q["answer"]
+            formatted_q = format_question(q)
 
-        # ── ADAPT-AI ──────────────────────────────────────────────────────────
-        adapt = await run_adapt_ai(orchestrator, client, formatted_q, q["options"])
-        adapt_letter = adapt.get("letter")
+            print(f"Q{q_id + 1}/{total} ", end="", flush=True)
 
-        # ── Baseline ──────────────────────────────────────────────────────────
-        baseline = run_baseline(client, formatted_q)
-        baseline_letter = baseline.get("letter")
+            adapt_result = await run_adapt_ai(pipeline, formatted_q, q["options"], q_id)
+            adapt_result["correct"] = adapt_result["letter"] == correct if adapt_result["letter"] else False
 
-        # ── Record ────────────────────────────────────────────────────────────
-        n = len(results) + 1
-        print(
-            f"Q{n:3d}/100 | "
-            f"ADAPT-AI: {adapt_letter or '?':1} | "
-            f"Baseline: {baseline_letter or '?':1} | "
-            f"Correct: {correct}"
-        )
+            base_result = run_baseline(client, formatted_q)
+            base_result["correct"] = base_result["letter"] == correct if base_result["letter"] else False
 
-        results.append({
-            "id": q["id"],
-            "question": q["question"],
-            "correct": correct,
-            "adapt_ai": {
-                "letter": adapt_letter,
-                "correct": adapt_letter == correct if adapt_letter else False,
-                "time": adapt.get("time"),
-                "cost": adapt.get("cost"),
-                "pipeline_time": adapt.get("pipeline_time"),
-                "orchestrator_status": adapt.get("orchestrator_status"),
-                "error": adapt.get("error"),
-            },
-            "baseline": {
-                "letter": baseline_letter,
-                "correct": baseline_letter == correct if baseline_letter else False,
-                "time": baseline.get("time"),
-                "cost": baseline.get("cost"),
-                "input_tokens": baseline.get("input_tokens"),
-                "output_tokens": baseline.get("output_tokens"),
-                "error": baseline.get("error"),
-            },
-        })
+            adapt_letter = adapt_result.get("letter", "?") or "?"
+            base_letter = base_result.get("letter", "?") or "?"
+            adapt_ok = "✓" if adapt_result["correct"] else "✗"
+            base_ok = "✓" if base_result["correct"] else "✗"
+            cost_str = f"  ${adapt_result['total_cost_usd']:.4f}" if adapt_result.get("total_cost_usd") else ""
+            print(
+                f"ADAPT={adapt_letter}{adapt_ok} Base={base_letter}{base_ok} "
+                f"({adapt_result['time']:.1f}s / {base_result['time']:.1f}s){cost_str}"
+            )
 
-        # Incremental save every 10 questions
-        if len(results) % 10 == 0:
+            results.append({
+                "id": q_id,
+                "question": q["question"][:120],
+                "correct": correct,
+                "adapt_ai": adapt_result,
+                "baseline": base_result,
+            })
+
             DATA_DIR.mkdir(parents=True, exist_ok=True)
             RESULTS_PATH.write_text(json.dumps(results, indent=2), encoding="utf-8")
-            print(f"  [saved {len(results)} results → {RESULTS_PATH}]")
 
-        await asyncio.sleep(SLEEP_BETWEEN_QUESTIONS)
+            if q_id < total - 1:
+                time.sleep(SLEEP_BETWEEN_QUESTIONS)
 
-    # Final save
-    DATA_DIR.mkdir(parents=True, exist_ok=True)
-    RESULTS_PATH.write_text(json.dumps(results, indent=2), encoding="utf-8")
-    print(f"\nDone. {len(results)} results saved → {RESULTS_PATH}")
+    except RateLimitAbort as e:
+        print(f"\n\n⚠  Rate / usage limit hit — stopping early. Progress saved to {RESULTS_PATH}")
+        print(f"   Error: {e}")
+        print("   Re-run with --resume once the limit resets.")
+        _print_summary(results)
+        return
 
-    # Quick summary
-    adapt_correct = sum(1 for r in results if r["adapt_ai"]["correct"])
-    base_correct = sum(1 for r in results if r["baseline"]["correct"])
+    print(f"\nDone. Results saved to {RESULTS_PATH}")
+    _print_summary(results)
+
+
+def _print_summary(results: list[dict]) -> None:
+    adapt_correct = sum(1 for r in results if r["adapt_ai"].get("correct"))
+    base_correct = sum(1 for r in results if r["baseline"].get("correct"))
     n = len(results)
-    print(f"\nQuick summary ({n} questions):")
-    print(f"  ADAPT-AI accuracy : {adapt_correct}/{n} = {adapt_correct/n:.1%}")
-    print(f"  Baseline accuracy : {base_correct}/{n} = {base_correct/n:.1%}")
+    print(f"\n{'='*50}")
+    print(f"Results over {n} questions:")
+    print(f"  ADAPT-AI : {adapt_correct}/{n} = {adapt_correct/n*100:.1f}%")
+    print(f"  Baseline : {base_correct}/{n} = {base_correct/n*100:.1f}%")
+    print(f"  Delta    : {(adapt_correct - base_correct)/n*100:+.1f}%")
 
 
 def main() -> None:
-    parser = argparse.ArgumentParser(description="MedQA benchmark runner")
-    parser.add_argument(
-        "--questions", type=int, default=100,
-        help="Number of questions to run (default: all 100)",
-    )
-    parser.add_argument(
-        "--resume", action="store_true",
-        help="Skip questions already recorded in medqa_results.json",
-    )
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--questions", type=int, default=None)
+    parser.add_argument("--resume", action="store_true")
+    parser.add_argument("--no-quality", action="store_true",
+                        help="Ablation: run without the quality agent")
     args = parser.parse_args()
 
     if not SAMPLE_PATH.exists():
-        sys.exit(f"ERROR: {SAMPLE_PATH} not found. Run scripts/download_medqa.py first.")
+        print(f"Sample not found at {SAMPLE_PATH}. Run: python scripts/download_medqa.py")
+        sys.exit(1)
 
     questions = json.loads(SAMPLE_PATH.read_text(encoding="utf-8"))
-    if args.questions < len(questions):
+    if args.questions:
         questions = questions[: args.questions]
-        print(f"Running on first {args.questions} questions (smoke-test mode).")
 
-    asyncio.run(benchmark(questions, resume=args.resume))
+    asyncio.run(benchmark(questions, resume=args.resume, include_quality=not args.no_quality))
 
 
 if __name__ == "__main__":
