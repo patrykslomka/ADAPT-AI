@@ -40,8 +40,9 @@ app = FastAPI(title="ADAPT-AI", version="2.0.0", lifespan=lifespan)
 
 class QueryRequest(BaseModel):
     query: str
-    patient_id: Optional[str] = None
+    subject_id: Optional[str] = None   # domain entity id (patient/case/account)
     session_id: Optional[str] = None
+    domain: str = "healthcare"
 
 
 class QueryResponse(BaseModel):
@@ -72,7 +73,8 @@ async def query(request: QueryRequest):
 
     initial_state = {
         "query": request.query,
-        "patient_id": request.patient_id,
+        "subject_id": request.subject_id,
+        "domain": request.domain,
         "session_id": session_id,
         "use_rat": False,
         "retrieved_context": "",
@@ -125,7 +127,7 @@ async def query(request: QueryRequest):
         agent_statuses=result.get("agent_statuses", {}),
         metadata={
             "session_id": session_id,
-            "patient_id": request.patient_id,
+            "subject_id": request.subject_id,
             "response_time": elapsed,
             "use_rat": result.get("use_rat", False),
             "revision_count": result.get("revision_count", 0),

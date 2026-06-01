@@ -1,4 +1,4 @@
-"""Primary Domain Agent — clinical reasoning via MCP tool calls."""
+"""Primary Domain Agent — domain reasoning via MCP tool calls."""
 from __future__ import annotations
 import logging
 import time
@@ -8,30 +8,13 @@ from anthropic import Anthropic
 
 from adapt_ai.agents.state import AgentState
 from adapt_ai.config import settings
+from adapt_ai.domain.profiles import get_domain_profile
 from adapt_ai.llmops.usage import record_llm_call
 
 if TYPE_CHECKING:
     from adapt_ai.orchestrator.client import MCPClient
 
 logger = logging.getLogger(__name__)
-
-_SYSTEM_PROMPT = """\
-You are an expert clinical diagnostic assistant supporting healthcare providers.
-
-Your role:
-1. Analyse patient presentations and medical history.
-2. Generate evidence-based differential diagnoses.
-3. Recommend appropriate diagnostic work-ups.
-4. Suggest treatment considerations based on established guidelines.
-
-When answering a multiple-choice question (A / B / C / D / E):
-- Reason step-by-step through the clinical scenario.
-- Eliminate incorrect options explicitly.
-- End your response with exactly: ANSWER: X
-  (where X is the single letter of the best choice).
-
-You are providing decision support for qualified healthcare providers — not making diagnoses.\
-"""
 
 
 def make_primary_node(mcp_client: "MCPClient", anthropic_client: Anthropic):
@@ -43,9 +26,10 @@ def make_primary_node(mcp_client: "MCPClient", anthropic_client: Anthropic):
         feedback = state.get("revision_feedback", "")
         revision = state.get("revision_count", 0)
 
-        user_content = f"Clinical question:\n{query}"
+        profile = get_domain_profile(state.get("domain"))
+        user_content = f'{profile.label("query")}:\n{query}'
         if context:
-            user_content += f"\n\nRetrieved clinical context:\n{context}"
+            user_content += f'\n\n{profile.label("context")}:\n{context}'
         if feedback:
             user_content += (
                 f"\n\n[Quality feedback from previous attempt — please address these issues:]\n{feedback}"
@@ -59,7 +43,7 @@ def make_primary_node(mcp_client: "MCPClient", anthropic_client: Anthropic):
                 model=settings.model_name,
                 max_tokens=settings.max_tokens,
                 temperature=settings.temperature,
-                system=_SYSTEM_PROMPT,
+                system=profile.personas["primary"],
                 messages=[{"role": "user", "content": user_content}],
             )
             latency = time.perf_counter() - t0

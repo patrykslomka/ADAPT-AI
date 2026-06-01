@@ -10,7 +10,7 @@ def _merge_dicts(a: dict, b: dict) -> dict:
 class AgentState(TypedDict):
     # ── Input ─────────────────────────────────────────────────────────────────
     query: str
-    patient_id: Optional[str]
+    subject_id: Optional[str]     # domain entity id (person/case/account)
     session_id: str
     domain: str             # regulated domain key: "healthcare" | "legal" | "finance"
 

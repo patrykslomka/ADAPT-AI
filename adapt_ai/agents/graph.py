@@ -18,6 +18,7 @@ from adapt_ai.agents.primary import make_primary_node
 from adapt_ai.agents.compliance import make_compliance_node
 from adapt_ai.agents.quality import make_quality_node
 from adapt_ai.config import settings
+from adapt_ai.domain.profiles import get_domain_profile
 from adapt_ai.llmops.usage import new_accumulator, get_accumulator
 from adapt_ai.orchestrator.client import MCPClient
 from adapt_ai.orchestrator.router import should_use_rat
@@ -31,14 +32,19 @@ def make_retrieval_node(mcp_client: MCPClient):
     async def intent_and_retrieve(state: AgentState) -> dict:
         new_accumulator(state["session_id"])  # fresh tracker keyed by session
         query = state["query"]
-        use_rat = should_use_rat(query)
+        domain = state.get("domain", "healthcare")
+        use_rat = should_use_rat(query, domain)
         try:
             if use_rat:
                 logger.debug("Routing to RAT for complex query")
-                context = await mcp_client.call_tool("rat_reason_tool", {"query": query, "context": ""})
+                context = await mcp_client.call_tool(
+                    "rat_reason_tool", {"query": query, "context": "", "domain": domain}
+                )
             else:
                 logger.debug("Routing to RAG for simple query")
-                context = await mcp_client.call_tool("rag_retrieve_tool", {"query": query, "n_results": 5})
+                context = await mcp_client.call_tool(
+                    "rag_retrieve_tool", {"query": query, "n_results": 5, "domain": domain}
+                )
         except Exception as e:
             logger.error("Retrieval error: %s", e)
             context = ""
@@ -82,12 +88,10 @@ async def aggregate_response(state: AgentState) -> dict:
             f"(confidence: {quality.get('score', 0):.0%})"
         )
 
-    # Disclaimer (only for non-MCQ / non-benchmark content)
-    parts.append(
-        "\n---\n"
-        "*AI-generated clinical decision support. "
-        "Healthcare providers must verify all recommendations.*"
-    )
+    # Disclaimer from domain profile
+    profile = get_domain_profile(state.get("domain"))
+    if profile.disclaimer:
+        parts.append(f"\n---\n{profile.disclaimer}")
 
     return {"final_response": "\n".join(parts), "llm_usage": llm_usage}
 

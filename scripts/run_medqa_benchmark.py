@@ -97,7 +97,7 @@ async def run_adapt_ai(pipeline, formatted_q: str, options: dict, q_id: int) -> 
         result = await pipeline.ainvoke(
             {
                 "query": formatted_q,
-                "patient_id": None,
+                "subject_id": None,
                 "domain": "healthcare",
                 "session_id": f"benchmark-{q_id}",
                 "use_rat": False,

@@ -1,4 +1,4 @@
-"""ChromaDB vector store — wraps the existing 'clinical_knowledge' collection."""
+"""ChromaDB vector store — wraps per-domain collections."""
 from typing import List, Dict, Any
 import chromadb
 
@@ -6,23 +6,26 @@ from adapt_ai.config import settings
 
 
 class VectorStore:
-    """Singleton wrapper around ChromaDB for domain document retrieval."""
+    """Wrapper around a single ChromaDB collection for domain document retrieval."""
 
-    _instance: "VectorStore | None" = None
+    _instances: "dict[str, VectorStore]" = {}
 
-    def __init__(self) -> None:
+    def __init__(self, collection_name: str) -> None:
         self._client = chromadb.PersistentClient(path=settings.chroma_persist_dir)
-        # Do not pass an embedding_function — use whatever the collection was seeded with.
-        # The existing 'clinical_knowledge' collection uses ChromaDB's default EF.
-        self._collection = self._client.get_or_create_collection(
-            name=settings.chroma_collection,
-        )
+        # Do not pass an embedding_function — must match whatever seeded each collection.
+        self._collection = self._client.get_or_create_collection(name=collection_name)
+
+    @classmethod
+    def for_collection(cls, collection_name: str) -> "VectorStore":
+        """Return a cached VectorStore for the given collection name."""
+        if collection_name not in cls._instances:
+            cls._instances[collection_name] = cls(collection_name)
+        return cls._instances[collection_name]
 
     @classmethod
     def get(cls) -> "VectorStore":
-        if cls._instance is None:
-            cls._instance = cls()
-        return cls._instance
+        """Return the default VectorStore (settings.chroma_collection). Back-compat."""
+        return cls.for_collection(settings.chroma_collection)
 
     def query(self, query_text: str, n_results: int = 5) -> List[Dict[str, Any]]:
         """Return top-n documents with their metadata and distances."""
@@ -43,7 +46,7 @@ class VectorStore:
     def format_context(self, docs: List[Dict[str, Any]]) -> str:
         """Format retrieved documents into a context string."""
         if not docs:
-            return "No relevant clinical context found."
+            return "No relevant context found."
         parts = []
         for i, d in enumerate(docs, 1):
             source = d["metadata"].get("source", d["metadata"].get("type", "unknown"))

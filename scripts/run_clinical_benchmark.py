@@ -102,7 +102,7 @@ async def run_adapt_ai(pipeline, item: dict, q_id: int) -> dict:
         result = await pipeline.ainvoke(
             {
                 "query": query,
-                "patient_id": None,
+                "subject_id": None,
                 "domain": "healthcare",
                 "session_id": f"clinical-bench-{q_id}",
                 "use_rat": False,      # overwritten by intent_and_retrieve node

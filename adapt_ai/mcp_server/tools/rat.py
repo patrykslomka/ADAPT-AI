@@ -7,6 +7,7 @@ from typing import List
 from anthropic import Anthropic
 
 from adapt_ai.config import settings
+from adapt_ai.domain.profiles import get_domain_profile
 from adapt_ai.domain.vector_store import VectorStore
 from adapt_ai.llmops.usage import record_llm_call
 
@@ -22,8 +23,13 @@ def _get_client() -> Anthropic:
     return _client
 
 
-async def rat_reason(query: str, context: str = "", max_steps: int | None = None) -> str:
-    """Multi-step reasoning using RAT pipeline.
+async def rat_reason(
+    query: str,
+    context: str = "",
+    domain: str = "healthcare",
+    max_steps: int | None = None,
+) -> str:
+    """Multi-step reasoning using RAT pipeline for the given domain.
 
     Steps:
     1. Initial query analysis (CoT prompt → decompose the question)
@@ -33,7 +39,8 @@ async def rat_reason(query: str, context: str = "", max_steps: int | None = None
     5. Final synthesis
     """
     n_steps = max_steps or settings.rat_max_steps
-    store = VectorStore.get()
+    profile = get_domain_profile(domain)
+    store = VectorStore.for_collection(profile.vector_collection)
     client = _get_client()
 
     accumulated_context = context
@@ -44,8 +51,8 @@ async def rat_reason(query: str, context: str = "", max_steps: int | None = None
         model=settings.model_name,
         max_tokens=512,
         temperature=0.1,
-        system="You are a medical reasoning assistant. Break down a clinical question into 2-3 focused sub-questions to guide targeted information retrieval. Output only the sub-questions, one per line.",
-        messages=[{"role": "user", "content": f"Clinical question:\n{query}"}],
+        system=profile.personas["rat_decompose"],
+        messages=[{"role": "user", "content": f'{profile.label("query")}:\n{query}'}],
     )
     record_llm_call(
         agent="rat.decompose",
@@ -76,18 +83,13 @@ async def rat_reason(query: str, context: str = "", max_steps: int | None = None
         model=settings.model_name,
         max_tokens=settings.max_tokens,
         temperature=settings.temperature,
-        system=(
-            "You are a clinical reasoning expert. Use the retrieved medical information "
-            "and your reasoning to answer the clinical question accurately. "
-            "Think step by step. If the question has answer choices (A/B/C/D/E), "
-            "conclude with 'ANSWER: X' where X is the letter of the best choice."
-        ),
+        system=profile.personas["rat_synthesis"],
         messages=[
             {
                 "role": "user",
                 "content": (
                     f"Question:\n{query}\n\n"
-                    f"Retrieved clinical context:\n{combined_context}\n\n"
+                    f'{profile.label("context")}:\n{combined_context}\n\n'
                     "Reason through this carefully and provide your answer."
                 ),
             }

@@ -14,21 +14,21 @@ mcp = FastMCP("adapt-ai")
 # ── Tools (Building Blocks) ────────────────────────────────────────────────────
 
 @mcp.tool()
-async def rag_retrieve_tool(query: str, n_results: int = 5) -> str:
-    """Retrieve relevant clinical documents using the RAG pipeline.
+async def rag_retrieve_tool(query: str, n_results: int = 5, domain: str = "healthcare") -> str:
+    """Retrieve relevant domain documents using the RAG pipeline.
 
     Use for: facts check, simple Q&A, direct information retrieval.
     """
-    return await rag_retrieve(query, n_results)
+    return await rag_retrieve(query, n_results, domain)
 
 
 @mcp.tool()
-async def rat_reason_tool(query: str, context: str = "") -> str:
-    """Multi-step clinical reasoning using the RAT pipeline with Chain-of-Thought.
+async def rat_reason_tool(query: str, context: str = "", domain: str = "healthcare") -> str:
+    """Multi-step domain reasoning using the RAT pipeline with Chain-of-Thought.
 
-    Use for: complex reasoning, multi-step clinical questions, differential diagnosis.
+    Use for: complex reasoning, multi-step questions, differential analysis.
     """
-    return await rat_reason(query, context)
+    return await rat_reason(query, context, domain)
 
 
 @mcp.tool()
