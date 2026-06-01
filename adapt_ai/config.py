@@ -32,6 +32,9 @@ class Settings(BaseSettings):
     regulations_dir: Path = Field(
         Path("./adapt_ai/domain/regulations"), alias="REGULATIONS_DIR"
     )
+    profiles_dir: Path = Field(
+        Path("./adapt_ai/domain/profiles"), alias="PROFILES_DIR"
+    )
 
     # RAT configuration
     rat_max_steps: int = Field(3, alias="RAT_MAX_STEPS")

@@ -1,0 +1,82 @@
+{
+  "domain": "healthcare",
+  "display_name": "Healthcare",
+  "labels": {
+    "query": "Clinical question",
+    "context": "Retrieved clinical context",
+    "quality_context": "Clinical context used"
+  },
+  "personas": {
+    "primary": "You are an expert clinical diagnostic assistant supporting healthcare providers.\n\nYour role:\n1. Analyse patient presentations and medical history.\n2. Generate evidence-based differential diagnoses.\n3. Recommend appropriate diagnostic work-ups.\n4. Suggest treatment considerations based on established guidelines.\n\nWhen answering a multiple-choice question (A / B / C / D / E):\n- Reason step-by-step through the clinical scenario.\n- Eliminate incorrect options explicitly.\n- End your response with exactly: ANSWER: X\n  (where X is the single letter of the best choice).\n\nYou are providing decision support for qualified healthcare providers — not making diagnoses.",
+    "quality": "You are a medical quality assurance specialist. Evaluate a clinical response for accuracy.\n\nGiven the original question and the AI response, assess:\n1. Does the response directly address the question?\n2. Is the clinical reasoning sound and consistent with medical evidence?\n3. If an answer choice (A/B/C/D/E) is stated, is it plausible given the clinical picture?\n4. Are there any hallucinations, contradictions, or unsupported claims?\n\nRespond ONLY with a JSON object in this exact format:\n{\n  \"passed\": true or false,\n  \"score\": 0.0-1.0,\n  \"issues\": [\"issue1\", \"issue2\"],\n  \"feedback\": \"brief corrective feedback if failed, else empty string\"\n}\n\nScore >= 0.85 -> passed=true. Be strict: fail if the response contains factual errors, omits critical safety information, contradicts established clinical guidelines, makes unsupported claims, or has any issue rated \"Major\" or \"Critical\". Scores of 0.6-0.84 should be passed=false with corrective feedback.",
+    "rat_decompose": "You are a medical reasoning assistant. Break down a clinical question into 2-3 focused sub-questions to guide targeted information retrieval. Output only the sub-questions, one per line.",
+    "rat_synthesis": "You are a clinical reasoning expert. Use the retrieved medical information and your reasoning to answer the clinical question accurately. Think step by step. If the question has answer choices (A/B/C/D/E), conclude with 'ANSWER: X' where X is the letter of the best choice."
+  },
+  "disclaimer": "*AI-generated clinical decision support. Healthcare providers must verify all recommendations.*",
+  "regulations_file": "healthcare.json",
+  "vector_collection": "clinical_knowledge",
+  "ontology_namespace": "healthcare",
+  "rat_keywords": [
+    "why", "mechanism", "pathophysiology", "explain", "compare", "differentiate",
+    "how does", "management", "treatment plan", "work-up", "workup", "differential",
+    "multi-step", "complex", "reason", "analyse", "analyze"
+  ],
+  "rag_keywords": [
+    "what is", "define", "list", "name", "which drug", "first-line", "first line",
+    "dose", "contraindication", "side effect", "interaction", "normal range", "reference value"
+  ],
+  "ethics_keywords": [
+    "ethics", "policy", "hipaa", "fraud", "malpractice", "consent", "disclose",
+    "obligation", "should i", "should you", "should we", "can i",
+    "is it ok", "is it appropriate", "is it legal", "is it ethical"
+  ],
+  "vignette_keywords": [
+    "year-old", "yo ", "presents", "history of", "physical exam", "vital signs",
+    "laboratory", "blood pressure", "mmhg", "pulse", "temperature", "oxygen"
+  ],
+  "hallucination_lexicon": {
+    "suffix_pattern": "\\b[A-Z][a-z]+(?:mycin|cillin|prazole|olol|pine|statin|pril|sartan|mab|nib|vir|tide|zole|oxin)\\b",
+    "warning_template": "Unrecognised drug name \"{term}\" — verify accuracy",
+    "valid_terms": [
+      "aspirin", "ibuprofen", "acetaminophen", "tylenol", "advil",
+      "metformin", "lisinopril", "amlodipine", "metoprolol", "atorvastatin",
+      "omeprazole", "losartan", "gabapentin", "sertraline", "levothyroxine",
+      "hydrochlorothiazide", "furosemide", "prednisone", "azithromycin",
+      "amoxicillin", "ciprofloxacin", "doxycycline", "ceftriaxone",
+      "vancomycin", "piperacillin", "tazobactam", "meropenem",
+      "heparin", "warfarin", "enoxaparin", "apixaban", "rivaroxaban",
+      "insulin", "nitroglycerin", "morphine", "fentanyl", "ketamine",
+      "propofol", "midazolam", "lorazepam", "diazepam", "haloperidol",
+      "ondansetron", "diphenhydramine", "epinephrine", "norepinephrine",
+      "dopamine", "dobutamine", "vasopressin", "phenylephrine",
+      "methotrexate", "cyclosporine", "tacrolimus",
+      "amiodarone", "digoxin", "spironolactone", "eplerenone",
+      "clopidogrel", "ticagrelor", "prasugrel", "alteplase",
+      "oseltamivir", "acyclovir", "valacyclovir", "remdesivir",
+      "hydroxychloroquine", "chloroquine", "dexamethasone", "methylprednisolone",
+      "sildenafil", "tadalafil", "finasteride", "tamsulosin",
+      "albuterol", "salbutamol", "ipratropium", "tiotropium", "montelukast",
+      "fluticasone", "budesonide", "beclomethasone",
+      "lithium", "olanzapine", "quetiapine", "risperidone", "aripiprazole",
+      "clozapine", "fluoxetine", "escitalopram", "citalopram", "paroxetine",
+      "venlafaxine", "duloxetine", "bupropion", "mirtazapine",
+      "carbamazepine", "valproate", "phenytoin", "levetiracetam", "lamotrigine",
+      "rifampicin", "isoniazid", "pyrazinamide", "ethambutol",
+      "trimethoprim", "sulfamethoxazole", "nitrofurantoin", "fosfomycin",
+      "labetalol", "nicardipine", "hydralazine", "enalaprilat",
+      "naloxone", "naltrexone", "buprenorphine", "methadone",
+      "glucagon", "dextrose", "calcium", "potassium", "magnesium",
+      "albumin", "mannitol", "acetazolamide",
+      "paracetamol", "codeine", "tramadol", "oxycodone", "hydrocodone",
+      "colchicine", "allopurinol", "febuxostat",
+      "nifedipine", "diltiazem", "verapamil",
+      "captopril", "enalapril", "ramipril", "perindopril",
+      "bisoprolol", "carvedilol", "atenolol", "propranolol",
+      "simvastatin", "rosuvastatin", "pravastatin", "fluvastatin"
+    ],
+    "false_positives": [
+      "medicine", "routine", "baseline", "pipeline", "outline", "guideline",
+      "timeline", "crystalline", "membrane", "cocaine", "codeine"
+    ]
+  }
+}
