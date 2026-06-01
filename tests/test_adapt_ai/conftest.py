@@ -63,7 +63,7 @@ def make_state(query: str = "What is the first-line treatment for hypertension?"
     """Build a complete initial AgentState dict for pipeline tests."""
     state = {
         "query": query,
-        "patient_id": None,
+        "subject_id": None,
         "session_id": session_id,
         "domain": "healthcare",
         "use_rat": False,
