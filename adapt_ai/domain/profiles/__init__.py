@@ -40,7 +40,7 @@ class DomainProfile:
     disclaimer: str
     regulations_file: str
     vector_collection: str
-    ontology_namespace: str
+    ontology_path: str        # path to OWL/RDF file, relative to project root
     lexicon: Lexicon = field(default_factory=Lexicon)
     rat_keywords: tuple = ()
     rag_keywords: tuple = ()
@@ -68,7 +68,7 @@ def _build(raw: dict) -> DomainProfile:
         disclaimer=raw.get("disclaimer", ""),
         regulations_file=raw.get("regulations_file", f'{raw["domain"]}.json'),
         vector_collection=raw["vector_collection"],
-        ontology_namespace=raw.get("ontology_namespace", raw["domain"]),
+        ontology_path=raw.get("ontology_path", ""),
         lexicon=lexicon,
         rat_keywords=tuple(raw.get("rat_keywords", ())),
         rag_keywords=tuple(raw.get("rag_keywords", ())),

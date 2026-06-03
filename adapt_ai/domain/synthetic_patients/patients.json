@@ -1,6 +1,6 @@
 {
   "version": "1.0",
-  "generated_at": "2025-12-13T10:58:21.062632",
+  "generated_at": "2026-06-01T22:30:16.548428",
   "total_patients": 20,
   "patients": [
     {
@@ -9,7 +9,7 @@
         "name": "Alexander Hill",
         "age": 26,
         "gender": "Male",
-        "date_of_birth": "1999-12-20",
+        "date_of_birth": "2000-06-07",
         "mrn": "MRN-877572"
       },
       "medical_history": {
@@ -51,10 +51,10 @@
         "blood_pressure_diastolic": 87,
         "respiratory_rate": 15,
         "oxygen_saturation": 96,
-        "recorded_at": "2025-12-13T10:58:21.060467"
+        "recorded_at": "2026-06-01T22:30:16.544231"
       },
       "recent_labs": {
-        "recorded_at": "2025-12-12T19:58:21.060475",
+        "recorded_at": "2026-06-01T07:30:16.544240",
         "creatinine": 1.0,
         "bun": 10,
         "wbc": 9.4,
@@ -66,7 +66,7 @@
         "sexually_active"
       ],
       "suspected_condition": "urinary_tract_infection",
-      "created_at": "2025-12-13T10:58:21.060490"
+      "created_at": "2026-06-01T22:30:16.544259"
     },
     {
       "demographics": {
@@ -74,7 +74,7 @@
         "name": "Nancy Rhodes",
         "age": 42,
         "gender": "Female",
-        "date_of_birth": "1983-12-24",
+        "date_of_birth": "1984-06-11",
         "mrn": "MRN-263032"
       },
       "medical_history": {
@@ -125,10 +125,10 @@
         "blood_pressure_diastolic": 77,
         "respiratory_rate": 18,
         "oxygen_saturation": 97,
-        "recorded_at": "2025-12-13T10:58:21.060668"
+        "recorded_at": "2026-06-01T22:30:16.544513"
       },
       "recent_labs": {
-        "recorded_at": "2025-12-13T02:58:21.060672",
+        "recorded_at": "2026-06-01T14:30:16.544519",
         "creatinine": 1.1,
         "bun": 16,
         "wbc": 6.3,
@@ -140,7 +140,7 @@
         "hypertension"
       ],
       "suspected_condition": "stroke_ischemic",
-      "created_at": "2025-12-13T10:58:21.060687"
+      "created_at": "2026-06-01T22:30:16.544531"
     },
     {
       "demographics": {
@@ -148,7 +148,7 @@
         "name": "Brandon Henderson",
         "age": 48,
         "gender": "Male",
-        "date_of_birth": "1977-12-25",
+        "date_of_birth": "1978-06-13",
         "mrn": "MRN-472528"
       },
       "medical_history": {
@@ -208,10 +208,10 @@
         "blood_pressure_diastolic": 88,
         "respiratory_rate": 25,
         "oxygen_saturation": 97,
-        "recorded_at": "2025-12-13T10:58:21.060832"
+        "recorded_at": "2026-06-01T22:30:16.544749"
       },
       "recent_labs": {
-        "recorded_at": "2025-12-12T18:58:21.060834",
+        "recorded_at": "2026-06-01T06:30:16.544753",
         "glucose": 351,
         "hba1c": 9.7,
         "creatinine": 1.1,
@@ -225,7 +225,7 @@
         "insulin_noncompliance"
       ],
       "suspected_condition": "diabetic_ketoacidosis",
-      "created_at": "2025-12-13T10:58:21.060843"
+      "created_at": "2026-06-01T22:30:16.544767"
     },
     {
       "demographics": {
@@ -233,7 +233,7 @@
         "name": "Colleen Wagner",
         "age": 72,
         "gender": "Female",
-        "date_of_birth": "1953-12-31",
+        "date_of_birth": "1954-06-19",
         "mrn": "MRN-712982"
       },
       "medical_history": {
@@ -309,10 +309,10 @@
         "blood_pressure_diastolic": 90,
         "respiratory_rate": 14,
         "oxygen_saturation": 95,
-        "recorded_at": "2025-12-13T10:58:21.060952"
+        "recorded_at": "2026-06-01T22:30:16.544966"
       },
       "recent_labs": {
-        "recorded_at": "2025-12-13T04:58:21.060955",
+        "recorded_at": "2026-06-01T16:30:16.544971",
         "creatinine": 1.0,
         "bun": 14,
         "wbc": 18.1,
@@ -323,7 +323,7 @@
         "endemic_travel"
       ],
       "suspected_condition": "tuberculosis",
-      "created_at": "2025-12-13T10:58:21.060963"
+      "created_at": "2026-06-01T22:30:16.544984"
     },
     {
       "demographics": {
@@ -331,7 +331,7 @@
         "name": "Christina Santos",
         "age": 78,
         "gender": "Female",
-        "date_of_birth": "1948-01-02",
+        "date_of_birth": "1948-06-20",
         "mrn": "MRN-769987"
       },
       "medical_history": {
@@ -391,10 +391,10 @@
         "blood_pressure_diastolic": 74,
         "respiratory_rate": 13,
         "oxygen_saturation": 100,
-        "recorded_at": "2025-12-13T10:58:21.061067"
+        "recorded_at": "2026-06-01T22:30:16.545173"
       },
       "recent_labs": {
-        "recorded_at": "2025-12-13T04:58:21.061070",
+        "recorded_at": "2026-06-01T16:30:16.545178",
         "creatinine": 0.9,
         "bun": 19,
         "wbc": 7.3,
@@ -407,7 +407,7 @@
         "diabetes"
       ],
       "suspected_condition": "myocardial_infarction_stemi",
-      "created_at": "2025-12-13T10:58:21.061076"
+      "created_at": "2026-06-01T22:30:16.545190"
     },
     {
       "demographics": {
@@ -415,7 +415,7 @@
         "name": "Daniel Lawrence",
         "age": 70,
         "gender": "Male",
-        "date_of_birth": "1955-12-31",
+        "date_of_birth": "1956-06-18",
         "mrn": "MRN-426858"
       },
       "medical_history": {
@@ -467,10 +467,10 @@
         "blood_pressure_diastolic": 85,
         "respiratory_rate": 24,
         "oxygen_saturation": 99,
-        "recorded_at": "2025-12-13T10:58:21.061176"
+        "recorded_at": "2026-06-01T22:30:16.545395"
       },
       "recent_labs": {
-        "recorded_at": "2025-12-12T15:58:21.061178",
+        "recorded_at": "2026-06-01T03:30:16.545400",
         "glucose": 397,
         "hba1c": 8.4,
         "creatinine": 2.7,
@@ -484,7 +484,7 @@
         "insulin_noncompliance"
       ],
       "suspected_condition": "diabetic_ketoacidosis",
-      "created_at": "2025-12-13T10:58:21.061188"
+      "created_at": "2026-06-01T22:30:16.545416"
     },
     {
       "demographics": {
@@ -492,7 +492,7 @@
         "name": "Abigail Shaffer",
         "age": 47,
         "gender": "Female",
-        "date_of_birth": "1978-12-25",
+        "date_of_birth": "1979-06-13",
         "mrn": "MRN-544154"
       },
       "medical_history": {
@@ -556,10 +556,10 @@
         "blood_pressure_diastolic": 87,
         "respiratory_rate": 12,
         "oxygen_saturation": 95,
-        "recorded_at": "2025-12-13T10:58:21.061286"
+        "recorded_at": "2026-06-01T22:30:16.545609"
       },
       "recent_labs": {
-        "recorded_at": "2025-12-13T09:58:21.061288",
+        "recorded_at": "2026-06-01T21:30:16.545613",
         "creatinine": 3.0,
         "bun": 49,
         "wbc": 10.0,
@@ -571,7 +571,7 @@
         "hypertension"
       ],
       "suspected_condition": "stroke_ischemic",
-      "created_at": "2025-12-13T10:58:21.061294"
+      "created_at": "2026-06-01T22:30:16.545624"
     },
     {
       "demographics": {
@@ -579,7 +579,7 @@
         "name": "Gina Moore",
         "age": 38,
         "gender": "Female",
-        "date_of_birth": "1987-12-23",
+        "date_of_birth": "1988-06-10",
         "mrn": "MRN-520521"
       },
       "medical_history": {
@@ -633,10 +633,10 @@
         "blood_pressure_diastolic": 86,
         "respiratory_rate": 13,
         "oxygen_saturation": 95,
-        "recorded_at": "2025-12-13T10:58:21.061386"
+        "recorded_at": "2026-06-01T22:30:16.545854"
       },
       "recent_labs": {
-        "recorded_at": "2025-12-13T07:58:21.061389",
+        "recorded_at": "2026-06-01T19:30:16.545859",
         "creatinine": 1.1,
         "bun": 11,
         "wbc": 17.4,
@@ -647,7 +647,7 @@
         "endemic_travel"
       ],
       "suspected_condition": "tuberculosis",
-      "created_at": "2025-12-13T10:58:21.061394"
+      "created_at": "2026-06-01T22:30:16.545874"
     },
     {
       "demographics": {
@@ -655,7 +655,7 @@
         "name": "George Davis",
         "age": 62,
         "gender": "Male",
-        "date_of_birth": "1963-12-29",
+        "date_of_birth": "1964-06-16",
         "mrn": "MRN-723398"
       },
       "medical_history": {
@@ -711,10 +711,10 @@
         "blood_pressure_diastolic": 72,
         "respiratory_rate": 16,
         "oxygen_saturation": 96,
-        "recorded_at": "2025-12-13T10:58:21.061494"
+        "recorded_at": "2026-06-01T22:30:16.546063"
       },
       "recent_labs": {
-        "recorded_at": "2025-12-12T17:58:21.061496",
+        "recorded_at": "2026-06-01T05:30:16.546066",
         "glucose": 133,
         "hba1c": 7.4,
         "creatinine": 0.9,
@@ -728,7 +728,7 @@
         "oral_contraceptives"
       ],
       "suspected_condition": "dvt_pe_rule_out",
-      "created_at": "2025-12-13T10:58:21.061503"
+      "created_at": "2026-06-01T22:30:16.546079"
     },
     {
       "demographics": {
@@ -736,7 +736,7 @@
         "name": "Sarah Munoz",
         "age": 78,
         "gender": "Female",
-        "date_of_birth": "1948-01-02",
+        "date_of_birth": "1948-06-20",
         "mrn": "MRN-669605"
       },
       "medical_history": {
@@ -795,10 +795,10 @@
         "blood_pressure_diastolic": 71,
         "respiratory_rate": 12,
         "oxygen_saturation": 100,
-        "recorded_at": "2025-12-13T10:58:21.061595"
+        "recorded_at": "2026-06-01T22:30:16.546271"
       },
       "recent_labs": {
-        "recorded_at": "2025-12-12T20:58:21.061596",
+        "recorded_at": "2026-06-01T08:30:16.546274",
         "creatinine": 1.1,
         "bun": 10,
         "wbc": 4.5,
@@ -807,7 +807,7 @@
       },
       "risk_factors": [],
       "suspected_condition": "malignancy_workup",
-      "created_at": "2025-12-13T10:58:21.061605"
+      "created_at": "2026-06-01T22:30:16.546289"
     },
     {
       "demographics": {
@@ -815,7 +815,7 @@
         "name": "Monica Herrera",
         "age": 35,
         "gender": "Female",
-        "date_of_birth": "1990-12-22",
+        "date_of_birth": "1991-06-10",
         "mrn": "MRN-877236"
       },
       "medical_history": {
@@ -875,10 +875,10 @@
         "blood_pressure_diastolic": 87,
         "respiratory_rate": 18,
         "oxygen_saturation": 98,
-        "recorded_at": "2025-12-13T10:58:21.061697"
+        "recorded_at": "2026-06-01T22:30:16.546481"
       },
       "recent_labs": {
-        "recorded_at": "2025-12-12T10:58:21.061700",
+        "recorded_at": "2026-05-31T22:30:16.546486",
         "creatinine": 0.9,
         "bun": 13,
         "wbc": 19.8,
@@ -889,7 +889,7 @@
         "endemic_travel"
       ],
       "suspected_condition": "tuberculosis",
-      "created_at": "2025-12-13T10:58:21.061707"
+      "created_at": "2026-06-01T22:30:16.546498"
     },
     {
       "demographics": {
@@ -897,7 +897,7 @@
         "name": "Mr. Juan Calderon",
         "age": 36,
         "gender": "Male",
-        "date_of_birth": "1989-12-22",
+        "date_of_birth": "1990-06-10",
         "mrn": "MRN-872343"
       },
       "medical_history": {
@@ -966,10 +966,10 @@
         "blood_pressure_diastolic": 78,
         "respiratory_rate": 30,
         "oxygen_saturation": 100,
-        "recorded_at": "2025-12-13T10:58:21.061801"
+        "recorded_at": "2026-06-01T22:30:16.546844"
       },
       "recent_labs": {
-        "recorded_at": "2025-12-12T12:58:21.061804",
+        "recorded_at": "2026-06-01T00:30:16.546849",
         "glucose": 465,
         "hba1c": 8.6,
         "creatinine": 1.2,
@@ -983,7 +983,7 @@
         "insulin_noncompliance"
       ],
       "suspected_condition": "diabetic_ketoacidosis",
-      "created_at": "2025-12-13T10:58:21.061810"
+      "created_at": "2026-06-01T22:30:16.546861"
     },
     {
       "demographics": {
@@ -991,7 +991,7 @@
         "name": "Shannon Ray",
         "age": 27,
         "gender": "Female",
-        "date_of_birth": "1998-12-20",
+        "date_of_birth": "1999-06-08",
         "mrn": "MRN-213668"
       },
       "medical_history": {
@@ -1048,10 +1048,10 @@
         "blood_pressure_diastolic": 79,
         "respiratory_rate": 16,
         "oxygen_saturation": 97,
-        "recorded_at": "2025-12-13T10:58:21.061900"
+        "recorded_at": "2026-06-01T22:30:16.547048"
       },
       "recent_labs": {
-        "recorded_at": "2025-12-12T12:58:21.061901",
+        "recorded_at": "2026-06-01T00:30:16.547051",
         "creatinine": 1.0,
         "bun": 16,
         "wbc": 9.0,
@@ -1060,7 +1060,7 @@
       },
       "risk_factors": [],
       "suspected_condition": "malignancy_workup",
-      "created_at": "2025-12-13T10:58:21.061906"
+      "created_at": "2026-06-01T22:30:16.547061"
     },
     {
       "demographics": {
@@ -1068,7 +1068,7 @@
         "name": "Amber Perez",
         "age": 67,
         "gender": "Female",
-        "date_of_birth": "1958-12-30",
+        "date_of_birth": "1959-06-18",
         "mrn": "MRN-497562"
       },
       "medical_history": {
@@ -1132,10 +1132,10 @@
         "blood_pressure_diastolic": 79,
         "respiratory_rate": 13,
         "oxygen_saturation": 96,
-        "recorded_at": "2025-12-13T10:58:21.062000"
+        "recorded_at": "2026-06-01T22:30:16.547263"
       },
       "recent_labs": {
-        "recorded_at": "2025-12-13T09:58:21.062002",
+        "recorded_at": "2026-06-01T21:30:16.547267",
         "creatinine": 0.8,
         "bun": 17,
         "wbc": 8.5,
@@ -1147,7 +1147,7 @@
         "hypertension"
       ],
       "suspected_condition": "stroke_ischemic",
-      "created_at": "2025-12-13T10:58:21.062009"
+      "created_at": "2026-06-01T22:30:16.547281"
     },
     {
       "demographics": {
@@ -1155,7 +1155,7 @@
         "name": "Angela Hall",
         "age": 81,
         "gender": "Female",
-        "date_of_birth": "1945-01-02",
+        "date_of_birth": "1945-06-21",
         "mrn": "MRN-760356"
       },
       "medical_history": {
@@ -1219,10 +1219,10 @@
         "blood_pressure_diastolic": 80,
         "respiratory_rate": 18,
         "oxygen_saturation": 98,
-        "recorded_at": "2025-12-13T10:58:21.062101"
+        "recorded_at": "2026-06-01T22:30:16.547456"
       },
       "recent_labs": {
-        "recorded_at": "2025-12-12T20:58:21.062103",
+        "recorded_at": "2026-06-01T08:30:16.547461",
         "creatinine": 1.1,
         "bun": 18,
         "wbc": 7.4,
@@ -1235,7 +1235,7 @@
         "diabetes"
       ],
       "suspected_condition": "myocardial_infarction_stemi",
-      "created_at": "2025-12-13T10:58:21.062109"
+      "created_at": "2026-06-01T22:30:16.547473"
     },
     {
       "demographics": {
@@ -1243,7 +1243,7 @@
         "name": "Donald Reid",
         "age": 78,
         "gender": "Male",
-        "date_of_birth": "1948-01-02",
+        "date_of_birth": "1948-06-20",
         "mrn": "MRN-768636"
       },
       "medical_history": {
@@ -1300,10 +1300,10 @@
         "blood_pressure_diastolic": 80,
         "respiratory_rate": 16,
         "oxygen_saturation": 98,
-        "recorded_at": "2025-12-13T10:58:21.062199"
+        "recorded_at": "2026-06-01T22:30:16.547644"
       },
       "recent_labs": {
-        "recorded_at": "2025-12-12T20:58:21.062200",
+        "recorded_at": "2026-06-01T08:30:16.547646",
         "creatinine": 1.6,
         "bun": 38,
         "wbc": 7.0,
@@ -1312,7 +1312,7 @@
       },
       "risk_factors": [],
       "suspected_condition": "subarachnoid_hemorrhage_rule_out",
-      "created_at": "2025-12-13T10:58:21.062206"
+      "created_at": "2026-06-01T22:30:16.547657"
     },
     {
       "demographics": {
@@ -1320,7 +1320,7 @@
         "name": "Jacob Clark",
         "age": 79,
         "gender": "Male",
-        "date_of_birth": "1947-01-02",
+        "date_of_birth": "1947-06-21",
         "mrn": "MRN-902784"
       },
       "medical_history": {
@@ -1399,10 +1399,10 @@
         "blood_pressure_diastolic": 88,
         "respiratory_rate": 26,
         "oxygen_saturation": 89,
-        "recorded_at": "2025-12-13T10:58:21.062312"
+        "recorded_at": "2026-06-01T22:30:16.547836"
       },
       "recent_labs": {
-        "recorded_at": "2025-12-12T19:58:21.062315",
+        "recorded_at": "2026-06-01T07:30:16.547841",
         "creatinine": 1.8,
         "bun": 33,
         "wbc": 13.7,
@@ -1414,7 +1414,7 @@
         "chronic_lung_disease"
       ],
       "suspected_condition": "pneumonia_cap",
-      "created_at": "2025-12-13T10:58:21.062321"
+      "created_at": "2026-06-01T22:30:16.547852"
     },
     {
       "demographics": {
@@ -1422,7 +1422,7 @@
         "name": "Taylor Wong",
         "age": 42,
         "gender": "Female",
-        "date_of_birth": "1983-12-24",
+        "date_of_birth": "1984-06-11",
         "mrn": "MRN-888539"
       },
       "medical_history": {
@@ -1491,10 +1491,10 @@
         "blood_pressure_diastolic": 75,
         "respiratory_rate": 16,
         "oxygen_saturation": 99,
-        "recorded_at": "2025-12-13T10:58:21.062414"
+        "recorded_at": "2026-06-01T22:30:16.548026"
       },
       "recent_labs": {
-        "recorded_at": "2025-12-13T04:58:21.062420",
+        "recorded_at": "2026-06-01T16:30:16.548033",
         "glucose": 139,
         "hba1c": 7.3,
         "creatinine": 1.5,
@@ -1509,7 +1509,7 @@
         "diabetes"
       ],
       "suspected_condition": "myocardial_infarction_stemi",
-      "created_at": "2025-12-13T10:58:21.062427"
+      "created_at": "2026-06-01T22:30:16.548045"
     },
     {
       "demographics": {
@@ -1517,7 +1517,7 @@
         "name": "Christopher Daniel",
         "age": 29,
         "gender": "Male",
-        "date_of_birth": "1996-12-20",
+        "date_of_birth": "1997-06-08",
         "mrn": "MRN-720859"
       },
       "medical_history": {
@@ -1570,10 +1570,10 @@
         "blood_pressure_diastolic": 84,
         "respiratory_rate": 17,
         "oxygen_saturation": 96,
-        "recorded_at": "2025-12-13T10:58:21.062519"
+        "recorded_at": "2026-06-01T22:30:16.548212"
       },
       "recent_labs": {
-        "recorded_at": "2025-12-12T10:58:21.062521",
+        "recorded_at": "2026-05-31T22:30:16.548215",
         "glucose": 166,
         "hba1c": 9.9,
         "creatinine": 0.9,
@@ -1586,7 +1586,7 @@
         "endemic_travel"
       ],
       "suspected_condition": "tuberculosis",
-      "created_at": "2025-12-13T10:58:21.062527"
+      "created_at": "2026-06-01T22:30:16.548226"
     },
     {
       "demographics": {
@@ -1594,7 +1594,7 @@
         "name": "Jamie Mayo",
         "age": 45,
         "gender": "Female",
-        "date_of_birth": "1980-12-24",
+        "date_of_birth": "1981-06-12",
         "mrn": "MRN-993085"
       },
       "medical_history": {
@@ -1639,10 +1639,10 @@
         "blood_pressure_diastolic": 78,
         "respiratory_rate": 16,
         "oxygen_saturation": 95,
-        "recorded_at": "2025-12-13T10:58:21.062612"
+        "recorded_at": "2026-06-01T22:30:16.548387"
       },
       "recent_labs": {
-        "recorded_at": "2025-12-12T17:58:21.062614",
+        "recorded_at": "2026-06-01T05:30:16.548390",
         "glucose": 124,
         "hba1c": 7.3,
         "creatinine": 1.1,
@@ -1653,7 +1653,7 @@
       },
       "risk_factors": [],
       "suspected_condition": "malignancy_workup",
-      "created_at": "2025-12-13T10:58:21.062619"
+      "created_at": "2026-06-01T22:30:16.548403"
     }
   ]
 }

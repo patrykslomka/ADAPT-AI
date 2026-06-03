@@ -39,14 +39,20 @@ async def validate_output(content: str, domain: str = "healthcare") -> Dict[str,
         if _content_is_exempt(content, exceptions):
             continue
 
-        # Check patterns
+        # Check patterns. Patterns are treated as regexes; invalid ones are
+        # skipped rather than crashing the whole validation pass.
         for pattern in rule.get("patterns", []):
-            if re.search(pattern, content, re.IGNORECASE):
+            try:
+                hit = re.search(pattern, content, re.IGNORECASE)
+            except re.error:
+                continue
+            if hit:
                 issues.append({
                     "rule_id": rule_id,
                     "description": rule["description"],
                     "severity": severity,
                     "matched_pattern": pattern,
+                    "matched_text": hit.group(0),
                 })
                 if severity == "critical":
                     suggestions.append(f"Remove or anonymise content matching '{pattern}' (rule {rule_id})")

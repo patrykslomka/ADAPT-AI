@@ -174,14 +174,17 @@ ground_truth_manager.add_query(query)
 
 ## Programmatic Usage
 
+> **Note:** The legacy `src/` prototype orchestrator has been removed. `SystemEvaluator`
+> is orchestrator-agnostic — pass any object exposing an async `process_query(...)`.
+> For the maintained `adapt_ai/` pipeline, prefer `scripts/run_clinical_benchmark.py`,
+> which reuses `ClinicalEvaluator` from `evaluation/metrics.py` directly.
+
 ```python
 import asyncio
-from src.mcp.orchestrator import MCPOrchestrator
 from evaluation.evaluator import SystemEvaluator
 
-async def run_evaluation():
-    # Initialize
-    orchestrator = MCPOrchestrator()
+async def run_evaluation(orchestrator):
+    # `orchestrator` must expose: async process_query(query, ...) -> response
     evaluator = SystemEvaluator(use_bertscore=True)
 
     # Run evaluation

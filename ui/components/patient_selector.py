@@ -17,10 +17,19 @@ def render_patient_selector(patient_handler) -> Optional[str]:
         for p in patients
     ]
     
+    # Restore previous selection so it survives Streamlit reruns
+    prev = st.session_state.get("selected_patient")
+    default_index = 0
+    if prev:
+        for i, opt in enumerate(options):
+            if opt.startswith(prev):
+                default_index = i
+                break
+
     selected = st.selectbox(
         "Select Patient",
         options,
-        index=0,
+        index=default_index,
         help="Choose a patient to provide context for queries"
     )
     

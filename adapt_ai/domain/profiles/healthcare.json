@@ -15,7 +15,7 @@
   "disclaimer": "*AI-generated clinical decision support. Healthcare providers must verify all recommendations.*",
   "regulations_file": "healthcare.json",
   "vector_collection": "clinical_knowledge",
-  "ontology_namespace": "healthcare",
+  "ontology_path": "data/ontologies/healthcare/hp.owl",
   "rat_keywords": [
     "why", "mechanism", "pathophysiology", "explain", "compare", "differentiate",
     "how does", "management", "treatment plan", "work-up", "workup", "differential",

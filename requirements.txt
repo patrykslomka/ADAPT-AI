@@ -1,3 +1,6 @@
+# Ontology
+rdflib>=7.0.0
+
 # Core LLM & Agents
 anthropic>=0.40.0
 langchain-anthropic>=0.1.0
@@ -29,7 +32,8 @@ pydantic>=2.6.0
 pydantic-settings>=2.1.0
 
 # UI & Visualization
-streamlit>=1.30.0
+streamlit>=1.35.0,<1.52  # 1.52.1 breaks with all installed protobuf versions
+protobuf>=5.0,<6         # >=5 for opentelemetry-proto, <6 to stay with streamlit <1.52
 plotly>=5.18.0
 streamlit-mermaid>=0.1.0
 pandas>=2.2.0

@@ -4,15 +4,21 @@ import logging
 import time
 import uuid
 from contextlib import asynccontextmanager
+from pathlib import Path
 from typing import Optional
 
 from fastapi import FastAPI, HTTPException
+from fastapi.responses import FileResponse
+from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 
 from adapt_ai.orchestrator.client import build_mcp_client, MCPClient
 from adapt_ai.orchestrator.session import SessionManager
 from adapt_ai.agents.graph import build_graph
 from adapt_ai.llmops.tracing import setup_tracing
+from adapt_ai.domain.patient_handler import PatientHandler
+
+_UI_DIR = Path(__file__).parent.parent.parent / "ui"
 
 logger = logging.getLogger(__name__)
 
@@ -35,6 +41,10 @@ async def lifespan(app: FastAPI):
 
 app = FastAPI(title="ADAPT-AI", version="2.0.0", lifespan=lifespan)
 
+# Serve ui/ as static files (CSS, JS assets if any)
+if _UI_DIR.exists():
+    app.mount("/ui", StaticFiles(directory=str(_UI_DIR)), name="ui")
+
 
 # ── Request / response models ─────────────────────────────────────────────────
 
@@ -53,6 +63,11 @@ class QueryResponse(BaseModel):
 
 
 # ── Routes ────────────────────────────────────────────────────────────────────
+
+@app.get("/", include_in_schema=False)
+async def index():
+    return FileResponse(str(_UI_DIR / "index.html"))
+
 
 @app.get("/health")
 async def health():
@@ -103,14 +118,24 @@ async def query(request: QueryRequest):
     # Handle compliance rejection (pipeline ends early → no final_response)
     if not result.get("final_response") and not result.get("compliance_result", {}).get("passed", True):
         await session.append_message(session_id, "user", request.query)
+        compliance = result.get("compliance_result", {})
+        issues = compliance.get("issues", [])
+        detail_lines = [
+            f"- [{i.get('severity', 'n/a').upper()}] {i.get('description', '')}"
+            + (f" (matched: \"{i['matched_text']}\")" if i.get("matched_text") else "")
+            for i in issues
+        ]
+        content = "**Response withheld — compliance check failed.**\n\n" + (
+            "\n".join(detail_lines) if detail_lines else "No specific issues reported."
+        )
         return QueryResponse(
             status="rejected",
-            content="Response rejected due to compliance issues.",
+            content=content,
             agent_statuses=result.get("agent_statuses", {}),
             metadata={
                 "session_id": session_id,
                 "response_time": elapsed,
-                "compliance_issues": result.get("compliance_result", {}).get("issues", []),
+                "compliance_issues": issues,
             },
         )
 
@@ -133,6 +158,12 @@ async def query(request: QueryRequest):
             "revision_count": result.get("revision_count", 0),
         },
     )
+
+
+@app.get("/patients")
+async def list_patients():
+    ph = PatientHandler()
+    return ph.list_patients()
 
 
 @app.get("/session/{session_id}/history")

@@ -1,15 +1,24 @@
 {
   "domain": "healthcare",
-  "version": "1.0",
+  "version": "1.1",
+  "_notes": "Patterns are case-insensitive regexes. PHI rules match actual identifier VALUES (SSN/phone/email/MRN), not the words describing them, so clinical prose like 'dobutamine' or 'the patient's date of birth' no longer triggers false positives. Use \\\\b word boundaries for short acronyms.",
   "regulations": [
     {
       "id": "HIPAA-001",
-      "name": "PHI Non-Disclosure",
+      "name": "PHI Identifier Disclosure",
       "category": "privacy",
-      "description": "Protected Health Information must not be disclosed without patient consent",
+      "description": "Protected Health Information identifiers (SSN, phone, email, MRN) must not be disclosed",
       "severity": "critical",
-      "patterns": ["SSN", "social security", "date of birth", "DOB", "home address", "phone number", "email address", "account number", "certificate number", "license number"],
-      "exceptions": ["de-identified", "aggregate", "anonymized", "synthetic", "hypothetical", "case study"]
+      "patterns": [
+        "\\b\\d{3}-\\d{2}-\\d{4}\\b",
+        "\\bSSN\\b",
+        "social security number",
+        "\\b\\(?\\d{3}\\)?[-.\\s]\\d{3}[-.\\s]\\d{4}\\b",
+        "\\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}\\b",
+        "\\bMRN[:#]?\\s*\\d{4,}\\b",
+        "medical record number[:#]?\\s*\\d{4,}"
+      ],
+      "exceptions": ["de-identified", "aggregate", "anonymized", "anonymised", "synthetic", "hypothetical", "case study"]
     },
     {
       "id": "HIPAA-002",
@@ -27,7 +36,7 @@
       "description": "Off-label drug use must be clearly disclosed",
       "severity": "high",
       "patterns": ["off-label", "unapproved indication"],
-      "exceptions": ["with disclosure", "clearly noted", "clinician judgment"]
+      "exceptions": ["with disclosure", "clearly noted", "clinician judgment", "clinical judgment"]
     },
     {
       "id": "CLINICAL-001",
@@ -35,7 +44,7 @@
       "category": "safety",
       "description": "AI-generated clinical content must include provider verification disclaimer",
       "severity": "medium",
-      "required_phrases": ["verify", "consult", "healthcare provider", "clinical judgment"],
+      "required_phrases": ["verify", "consult", "healthcare provider", "clinical judgment", "clinical judgement"],
       "exceptions": ["educational", "exam", "question", "academic", "study", "MCQ", "multiple choice", "USMLE", "test", "quiz"]
     },
     {
@@ -44,7 +53,7 @@
       "category": "safety",
       "description": "Definitive diagnoses should not be stated without appropriate caveats",
       "severity": "low",
-      "patterns": ["you have", "you are diagnosed with", "patient has"],
+      "patterns": ["\\byou are diagnosed with\\b", "\\byou definitely have\\b", "\\bdefinitive diagnosis is\\b"],
       "exceptions": ["most likely", "consistent with", "differential", "suggests", "indicates", "educational context", "exam question"]
     }
   ]

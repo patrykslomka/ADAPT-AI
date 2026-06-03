@@ -1,0 +1,71 @@
+{
+  "domain": "finance",
+  "version": "1.0",
+  "_notes": "Hand-authored rule set modelling US financial-services obligations. Maps to: GLBA (nonpublic personal information), FINRA Rule 2210 (communications with the public) & SEC anti-fraud (no guaranteed returns), SEC Reg BI / suitability (advice disclaimers), and ECOA / Reg B fair-lending (no decisions on protected class). Patterns are case-insensitive regexes; NPI rules match identifier VALUES to avoid false positives. Use \\\\b word boundaries for acronyms.",
+  "regulations": [
+    {
+      "id": "FIN-001",
+      "name": "Nonpublic Personal Information Disclosure",
+      "category": "privacy",
+      "description": "Customer NPI (SSN, account/card/routing numbers, email, phone) must be safeguarded (GLBA)",
+      "severity": "critical",
+      "patterns": [
+        "\\b\\d{3}-\\d{2}-\\d{4}\\b",
+        "\\b(?:\\d[ -]?){13,16}\\b",
+        "\\baccount\\s*(no\\.?|number|#)\\s*:?\\s*\\d{6,}",
+        "\\brouting\\s*(no\\.?|number|#)\\s*:?\\s*\\d{9}\\b",
+        "\\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}\\b",
+        "\\b\\(?\\d{3}\\)?[-.\\s]\\d{3}[-.\\s]\\d{4}\\b"
+      ],
+      "exceptions": ["de-identified", "anonymized", "anonymised", "sample", "synthetic", "hypothetical", "redacted", "example"]
+    },
+    {
+      "id": "FIN-002",
+      "name": "Guaranteed Return / Risk-Free Claim",
+      "category": "safety",
+      "description": "Communications must not promise guaranteed returns or describe investments as risk-free (FINRA 2210; SEC anti-fraud)",
+      "severity": "high",
+      "patterns": [
+        "guarantee[ds]?\\b[^.]{0,40}\\b(return|profit|gain|yield|income)",
+        "\\brisk[- ]free\\b",
+        "\\bno risk\\b",
+        "\\bcan(?:'|no)?t lose\\b",
+        "\\bcertain(ly)? to (profit|gain|double|grow)"
+      ],
+      "exceptions": ["past performance", "not a guarantee", "no guarantee", "subject to risk", "involves risk", "may lose"]
+    },
+    {
+      "id": "FIN-003",
+      "name": "Fair Lending — Protected Class",
+      "category": "fairness",
+      "description": "Credit decisions must not reference protected class characteristics (ECOA / Reg B)",
+      "severity": "high",
+      "patterns": [
+        "\\b(deny|denied|reject|approve|decline)[^.]{0,40}\\bbecause of[^.]{0,30}\\b(race|religion|sex|gender|national origin|age|marital status|color)",
+        "\\bbased on[^.]{0,20}\\b(their |your )?(race|religion|ethnicity|gender)\\b[^.]{0,30}\\b(credit|loan|approve|deny)"
+      ],
+      "exceptions": ["educational", "hypothetical", "prohibited", "must not", "illegal to", "fair lending"]
+    },
+    {
+      "id": "FIN-004",
+      "name": "Financial Advice Disclaimer Required",
+      "category": "safety",
+      "description": "AI-generated financial content must include a non-advice / consult-a-professional disclaimer (SEC Reg BI; suitability)",
+      "severity": "medium",
+      "required_phrases": ["not financial advice", "consult", "financial advisor", "financial adviser", "your own research", "subject to risk", "verify", "professional judgement", "professional judgment"],
+      "exceptions": ["educational", "exam", "question", "academic", "study", "hypothetical", "illustrative"]
+    },
+    {
+      "id": "FIN-005",
+      "name": "Definitive Performance Assertion",
+      "category": "safety",
+      "description": "Forward-looking performance statements should carry appropriate caveats",
+      "severity": "low",
+      "patterns": [
+        "\\byou will (definitely |certainly )?(profit|earn|double your|get rich)\\b",
+        "\\bguaranteed to (double|grow|outperform)\\b"
+      ],
+      "exceptions": ["may", "could", "historically", "potentially", "past performance", "estimate"]
+    }
+  ]
+}

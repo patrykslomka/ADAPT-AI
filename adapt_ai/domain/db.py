@@ -21,8 +21,8 @@ def _load_fallback_patients() -> List[Dict]:
         return _FALLBACK_PATIENTS
     patients_dir = settings.data_dir / "synthetic_patients"
     if not patients_dir.exists():
-        # Try the original src location
-        patients_dir = Path("./src/domain/synthetic_patients")
+        # Fall back to the profile-local synthetic patient data
+        patients_dir = Path(__file__).parent / "synthetic_patients"
     if patients_dir.exists():
         for f in patients_dir.glob("*.json"):
             try:

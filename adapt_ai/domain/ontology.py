@@ -1,242 +1,163 @@
-"""Healthcare domain ontology backed by Neo4j.
+"""Domain ontology backed by real OWL files (rdflib).
 
-Tries to connect to Neo4j on first access. Falls back to a seeded in-memory
-NetworkX graph when Neo4j is unavailable (no password configured, server not
-running, etc.), so benchmarks and tests remain runnable without a running
-database.
+Each domain profile specifies an `ontology_path` pointing to an OWL/RDF file
+in data/ontologies/<domain>/. The graph is loaded once per path and cached.
+Falls back to Neo4j if configured, or to an empty result when neither is
+available (so tests and benchmarks run without the OWL files present).
 
-Neo4j schema
-------------
-(:Concept {name, category, symptoms_str, treatment})
--[:RELATED_TO {relation}]->(:Concept)
-
-Cypher to seed the database (run once):
-    python -m adapt_ai.domain.ontology --seed
+Supported OWL formats: RDF/XML (.owl, .rdf), Turtle (.ttl), N-Triples (.nt).
 """
 from __future__ import annotations
+
 import logging
-from typing import Any, Dict, List, Optional
+from functools import lru_cache
+from pathlib import Path
+from typing import Any
 
 logger = logging.getLogger(__name__)
 
-# ── In-memory fallback data ────────────────────────────────────────────────────
-
-_CONCEPTS: List[tuple] = [
-    ("tuberculosis",      "infectious_disease", ["cough", "fever", "night_sweats", "weight_loss"], "RIPE therapy"),
-    ("hypertension",      "cardiovascular",     ["headache", "dizziness"],                          "ACE inhibitors, beta-blockers, lifestyle"),
-    ("diabetes_type2",    "metabolic",          ["polyuria", "polydipsia", "fatigue"],              "metformin, insulin, lifestyle"),
-    ("pneumonia",         "respiratory",        ["cough", "fever", "dyspnea"],                      "antibiotics"),
-    ("myocardial_infarction", "cardiovascular", ["chest_pain", "diaphoresis", "dyspnea"],           "MONA, PCI"),
-    ("dengue",            "infectious_disease", ["fever", "rash", "joint_pain", "leukopenia"],      "supportive"),
-    ("malaria",           "infectious_disease", ["fever", "chills", "splenomegaly"],                "antimalarials"),
-    ("sepsis",            "systemic",           ["fever", "tachycardia", "hypotension"],            "antibiotics, fluids"),
-    ("hypothyroidism",    "endocrine",          ["fatigue", "weight_gain", "cold_intolerance"],     "levothyroxine"),
-    ("hyperaldosteronism","endocrine",          ["hypertension", "hypokalemia", "muscle_cramps"],   "spironolactone, surgery"),
+# Predicates used across biomedical / legal / financial OWL ontologies
+_LABEL_PREDICATES = [
+    "http://www.w3.org/2000/01/rdf-schema#label",
+    "http://www.w3.org/2004/02/skos/core#prefLabel",
+    "http://www.w3.org/2004/02/skos/core#altLabel",
+]
+_DEF_PREDICATES = [
+    "http://purl.obolibrary.org/obo/IAO_0000115",          # OBO definition
+    "http://www.w3.org/2004/02/skos/core#definition",
+    "http://www.w3.org/2000/01/rdf-schema#comment",
+]
+_SYNONYM_PREDICATES = [
+    "http://www.geneontology.org/formats/oboInOwl#hasExactSynonym",
+    "http://www.geneontology.org/formats/oboInOwl#hasRelatedSynonym",
+    "http://www.w3.org/2004/02/skos/core#altLabel",
+]
+_BROADER_PREDICATES = [
+    "http://www.w3.org/2000/01/rdf-schema#subClassOf",
+    "http://www.w3.org/2004/02/skos/core#broader",
 ]
 
-_EDGES: List[tuple] = [
-    ("tuberculosis",        "pneumonia",            "differential"),
-    ("hypertension",        "myocardial_infarction","risk_factor"),
-    ("diabetes_type2",      "hypertension",         "comorbid"),
-    ("dengue",              "malaria",              "differential"),
-    ("hyperaldosteronism",  "hypertension",         "causes"),
-]
+
+@lru_cache(maxsize=8)
+def _load_graph(owl_path: str):
+    """Load an OWL/RDF file into an rdflib Graph. Cached by path string."""
+    import rdflib
+    path = Path(owl_path)
+    if not path.exists():
+        logger.warning("Ontology file not found: %s", owl_path)
+        return None
+    logger.info("Loading ontology from %s (this may take a moment)…", path.name)
+    g = rdflib.Graph()
+    fmt = {".ttl": "turtle", ".nt": "nt", ".n3": "n3"}.get(path.suffix.lower(), "xml")
+    g.parse(str(path), format=fmt)
+    logger.info("Loaded %d triples from %s", len(g), path.name)
+    return g
 
 
-# ── Seed / query helpers ───────────────────────────────────────────────────────
+def _query_owl(g, term: str) -> dict[str, Any]:
+    """Search rdflib graph for a term by label (case-insensitive prefix match)."""
+    import rdflib
 
-_SEED_CYPHER = """\
-MERGE (c:Concept {name: $name})
-SET c.category = $category,
-    c.symptoms  = $symptoms,
-    c.treatment = $treatment
-"""
+    term_lower = term.lower().strip()
+    matched_uri = None
 
-_EDGE_CYPHER = """\
-MATCH (a:Concept {name: $src}), (b:Concept {name: $dst})
-MERGE (a)-[r:RELATED_TO {relation: $relation}]->(b)
-"""
+    # First pass: find a subject with a matching label
+    for pred_uri in _LABEL_PREDICATES:
+        pred = rdflib.URIRef(pred_uri)
+        for s, _, o in g.triples((None, pred, None)):
+            label_str = str(o).lower()
+            if label_str == term_lower or label_str.startswith(term_lower):
+                matched_uri = s
+                break
+        if matched_uri:
+            break
 
-_QUERY_CYPHER = """\
-MATCH (c:Concept {name: $name})
-OPTIONAL MATCH (c)-[r:RELATED_TO]->(n)
-RETURN c.name       AS name,
-       c.category   AS category,
-       c.symptoms   AS symptoms,
-       c.treatment  AS treatment,
-       collect({name: n.name, relation: r.relation}) AS related
-"""
+    if matched_uri is None:
+        return {"concept": term, "found": False}
 
+    def _literals(subj, pred_uris):
+        results = []
+        for pu in pred_uris:
+            for _, _, o in g.triples((subj, rdflib.URIRef(pu), None)):
+                v = str(o).strip()
+                if v and len(v) < 500:
+                    results.append(v)
+        return results
 
-# ── OntologyGraph ──────────────────────────────────────────────────────────────
+    labels = _literals(matched_uri, _LABEL_PREDICATES)
+    defs = _literals(matched_uri, _DEF_PREDICATES)
+    synonyms = _literals(matched_uri, _SYNONYM_PREDICATES)
+
+    # Broader/parent terms (up to 3)
+    broader = []
+    for pu in _BROADER_PREDICATES:
+        for _, _, parent in g.triples((matched_uri, rdflib.URIRef(pu), None)):
+            if isinstance(parent, rdflib.URIRef):
+                for lpu in _LABEL_PREDICATES:
+                    for _, _, lo in g.triples((parent, rdflib.URIRef(lpu), None)):
+                        broader.append(str(lo))
+                        break
+                if broader:
+                    break
+        if len(broader) >= 3:
+            break
+
+    return {
+        "concept": labels[0] if labels else term,
+        "found": True,
+        "attributes": {
+            "definition": defs[0] if defs else "",
+            "synonyms": synonyms[:5],
+            "broader": broader[:3],
+        },
+    }
+
 
 class OntologyGraph:
-    """Healthcare concept graph.  Uses Neo4j when available, NetworkX otherwise."""
+    """Domain ontology graph.  Backed by a real OWL file via rdflib.
 
-    _instance: "OntologyGraph | None" = None
+    Usage:
+        graph = OntologyGraph.for_domain(profile)   # preferred
+        graph = OntologyGraph.get()                 # healthcare default (legacy)
+    """
 
-    def __init__(self) -> None:
-        self._driver = None       # neo4j.GraphDatabase.driver instance
-        self._nx_graph = None     # networkx.DiGraph fallback
+    _default: "OntologyGraph | None" = None
 
-        if self._try_neo4j():
-            logger.info("OntologyGraph: connected to Neo4j")
-        else:
-            logger.info("OntologyGraph: Neo4j unavailable — using in-memory fallback")
-            self._build_nx_graph()
+    def __init__(self, owl_path: str | None = None) -> None:
+        self._owl_path = owl_path
+        self._rdf_graph = _load_graph(owl_path) if owl_path else None
+        if self._rdf_graph is None and owl_path:
+            logger.warning("OntologyGraph: could not load %s — concept queries will return empty", owl_path)
 
-    # ── singleton ──────────────────────────────────────────────────────────────
+    @classmethod
+    def for_domain(cls, profile) -> "OntologyGraph":
+        """Create (or reuse cached) OntologyGraph for a DomainProfile."""
+        path = getattr(profile, "ontology_path", None)
+        return cls(path)
 
     @classmethod
     def get(cls) -> "OntologyGraph":
-        if cls._instance is None:
-            cls._instance = cls()
-        return cls._instance
+        """Return the default healthcare ontology (legacy singleton for back-compat)."""
+        if cls._default is None:
+            from adapt_ai.domain.profiles import get_domain_profile
+            profile = get_domain_profile("healthcare")
+            cls._default = cls.for_domain(profile)
+        return cls._default
 
-    # ── backend initialisation ─────────────────────────────────────────────────
+    def query_concept(self, concept: str) -> dict[str, Any]:
+        if self._rdf_graph is not None:
+            return _query_owl(self._rdf_graph, concept)
+        return {"concept": concept, "found": False, "error": "No ontology loaded"}
 
-    def _try_neo4j(self) -> bool:
-        try:
-            from neo4j import GraphDatabase
-            from adapt_ai.config import settings
-        except ImportError:
-            return False
-
-        if not settings.neo4j_password:
-            return False
-
-        try:
-            auth = (settings.neo4j_user, settings.neo4j_password.get_secret_value())
-            driver = GraphDatabase.driver(settings.neo4j_uri, auth=auth)
-            driver.verify_connectivity()
-            self._driver = driver
-            self._db = settings.neo4j_database
-            return True
-        except Exception as exc:
-            logger.debug("Neo4j connection failed: %s", exc)
-            return False
-
-    def _build_nx_graph(self) -> None:
-        try:
-            import networkx as nx
-            g = nx.DiGraph()
-            for name, cat, symptoms, treatment in _CONCEPTS:
-                g.add_node(name, category=cat, symptoms=symptoms, treatment=treatment)
-            for src, dst, rel in _EDGES:
-                g.add_edge(src, dst, relation=rel)
-            self._nx_graph = g
-        except ImportError:
-            logger.warning("networkx not installed — ontology queries will return empty results")
-
-    # ── public API ─────────────────────────────────────────────────────────────
-
-    def query_concept(self, concept: str) -> Dict[str, Any]:
-        """Return concept attributes and related concepts."""
-        concept_norm = concept.lower().replace(" ", "_")
-
-        if self._driver is not None:
-            return self._query_neo4j(concept_norm)
-        return self._query_nx(concept_norm)
-
-    def format_result(self, result: Dict[str, Any]) -> str:
+    def format_result(self, result: dict[str, Any]) -> str:
         if not result.get("found"):
             return f"Concept '{result.get('concept')}' not found in ontology."
         attrs = result.get("attributes", {})
         lines = [f"Concept: {result['concept']}"]
-        lines.append(f"Category: {attrs.get('category', 'unknown')}")
-        symptoms = attrs.get("symptoms")
-        if symptoms:
-            sym_str = ", ".join(symptoms) if isinstance(symptoms, list) else symptoms
-            lines.append(f"Symptoms: {sym_str}")
-        if attrs.get("treatment"):
-            lines.append(f"Treatment: {attrs['treatment']}")
-        if result.get("related"):
-            rels = ", ".join(
-                f"{r['name']} ({r['relation']})"
-                for r in result["related"]
-                if r.get("name")
-            )
-            if rels:
-                lines.append(f"Related: {rels}")
+        if attrs.get("definition"):
+            lines.append(f"Definition: {attrs['definition']}")
+        if attrs.get("synonyms"):
+            lines.append(f"Synonyms: {', '.join(attrs['synonyms'])}")
+        if attrs.get("broader"):
+            lines.append(f"Broader terms: {', '.join(attrs['broader'])}")
         return "\n".join(lines)
-
-    def close(self) -> None:
-        if self._driver is not None:
-            self._driver.close()
-            self._driver = None
-
-    # ── Neo4j backend ──────────────────────────────────────────────────────────
-
-    def _query_neo4j(self, concept: str) -> Dict[str, Any]:
-        try:
-            with self._driver.session(database=self._db) as session:
-                record = session.run(_QUERY_CYPHER, name=concept).single()
-            if record is None:
-                return {"concept": concept, "found": False}
-            symptoms = record["symptoms"]
-            return {
-                "concept": record["name"],
-                "found": True,
-                "attributes": {
-                    "category":  record["category"],
-                    "symptoms":  symptoms if isinstance(symptoms, list) else [symptoms],
-                    "treatment": record["treatment"],
-                },
-                "related": [r for r in record["related"] if r.get("name")],
-            }
-        except Exception as exc:
-            logger.error("Neo4j query error: %s", exc)
-            return {"concept": concept, "found": False, "error": str(exc)}
-
-    def seed_neo4j(self) -> None:
-        """Write hardcoded concepts and edges into Neo4j (idempotent via MERGE)."""
-        if self._driver is None:
-            raise RuntimeError("Neo4j driver not initialised")
-        with self._driver.session(database=self._db) as session:
-            for name, cat, symptoms, treatment in _CONCEPTS:
-                session.run(_SEED_CYPHER, name=name, category=cat,
-                            symptoms=symptoms, treatment=treatment)
-            for src, dst, rel in _EDGES:
-                session.run(_EDGE_CYPHER, src=src, dst=dst, relation=rel)
-        logger.info("Neo4j seeded with %d concepts and %d edges", len(_CONCEPTS), len(_EDGES))
-
-    # ── NetworkX fallback backend ──────────────────────────────────────────────
-
-    def _query_nx(self, concept: str) -> Dict[str, Any]:
-        if self._nx_graph is None:
-            return {"concept": concept, "found": False, "error": "No backend available"}
-
-        if concept not in self._nx_graph:
-            for node in self._nx_graph.nodes:
-                if concept in node or node in concept:
-                    concept = node
-                    break
-            else:
-                return {"concept": concept, "found": False}
-
-        attrs = dict(self._nx_graph.nodes[concept])
-        related = [
-            {"name": n, "relation": self._nx_graph.edges[concept, n].get("relation")}
-            for n in self._nx_graph.successors(concept)
-        ]
-        return {
-            "concept": concept,
-            "found": True,
-            "attributes": attrs,
-            "related": related,
-        }
-
-
-# ── CLI seed helper ────────────────────────────────────────────────────────────
-
-if __name__ == "__main__":
-    import sys
-    if "--seed" in sys.argv:
-        graph = OntologyGraph.get()
-        if graph._driver is None:
-            print("ERROR: Neo4j not connected.  Set NEO4J_PASSWORD in .env and ensure Neo4j is running.")
-            sys.exit(1)
-        graph.seed_neo4j()
-        print(f"Seeded {len(_CONCEPTS)} concepts and {len(_EDGES)} edges into Neo4j.")
-    else:
-        print("Usage: python -m adapt_ai.domain.ontology --seed")
