@@ -12,6 +12,16 @@ class Settings(BaseSettings):
     max_tokens: int = Field(2048, alias="MAX_TOKENS_PER_REQUEST")
     temperature: float = Field(0.3, alias="MODEL_TEMPERATURE")
 
+    # LLM provider selection (anthropic | openai_compatible)
+    llm_provider: str = Field("anthropic", alias="LLM_PROVIDER")
+    llm_base_url: str = Field("http://localhost:11434/v1", alias="LLM_BASE_URL")
+    llm_api_key: Optional[str] = Field(None, alias="LLM_API_KEY")
+    # LLM-as-judge (model must differ from the system-under-test)
+    judge_provider: str = Field("anthropic", alias="JUDGE_PROVIDER")
+    judge_model: str = Field("claude-opus-4-8", alias="JUDGE_MODEL")
+    judge_base_url: Optional[str] = Field(None, alias="JUDGE_BASE_URL")
+    judge_api_key: Optional[str] = Field(None, alias="JUDGE_API_KEY")
+
     # Redis (session management)
     redis_url: str = Field("redis://localhost:6379", alias="REDIS_URL")
     redis_fallback_memory: bool = Field(True, alias="REDIS_FALLBACK_MEMORY")
