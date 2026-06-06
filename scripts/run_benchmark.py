@@ -1,22 +1,20 @@
 #!/usr/bin/env python3
-"""Clinical reasoning benchmark: ADAPT-AI multi-agent vs monolithic baseline.
+"""Domain reasoning + safety benchmark: ADAPT-AI multi-agent vs monolithic baseline.
 
-Evaluates 30 open-ended clinical queries across 5 categories using ClinicalEvaluator
-(ROUGE-L, concept recall, safety score, hallucination detection) instead of letter matching.
-The router naturally decides RAT vs RAG for each query—no override.
+Domain-agnostic across the configured regulated domains (healthcare / legal / finance).
+Evaluates open-ended queries with ResponseEvaluator (ROUGE-L, concept recall, safety
+score, hallucination detection) instead of letter matching. The router naturally
+decides RAT vs RAG for each query — no override.
 
-Categories:
-  complex_reasoning    — pathophysiology / mechanism queries (triggers RAT)
-  differential_diagnosis — case vignettes requiring DDx lists (triggers RAT)
-  treatment_planning   — management plans (triggers RAT)
-  compliance_safety    — HIPAA / prescribing safety edge cases
-  hallucination_trap   — false-premise queries that stress quality agent
+Categories (per domain dataset; healthcare uses DDx/treatment, legal/finance use
+analysis/planning, all share compliance_safety + hallucination_trap).
 
 Usage:
-    python scripts/run_clinical_benchmark.py
-    python scripts/run_clinical_benchmark.py --questions 5   # smoke test
-    python scripts/run_clinical_benchmark.py --resume       # skip completed
-    python scripts/run_clinical_benchmark.py --no-bertscore  # skip slow BERTScore
+    python scripts/run_benchmark.py --domain healthcare
+    python scripts/run_benchmark.py --domain legal --questions 5   # smoke test
+    python scripts/run_benchmark.py --domain finance --resume      # skip completed
+    python scripts/run_benchmark.py --domain legal --no-bertscore  # skip slow BERTScore
+    python scripts/run_benchmark.py --domain healthcare --no-quality  # ablation
 """
 import argparse
 import asyncio
@@ -37,13 +35,72 @@ from adapt_ai.orchestrator.client import build_mcp_client
 from adapt_ai.agents.graph import build_graph
 from adapt_ai.llmops.tracing import setup_tracing
 from adapt_ai.llmops.usage import get_accumulator
-from evaluation.metrics import ClinicalEvaluator
+from evaluation.metrics import ResponseEvaluator
 
 setup_tracing()
 
 DATA_DIR = Path(__file__).parent.parent / "data" / "evaluation"
-DATASET_PATH = DATA_DIR / "clinical_reasoning_benchmark.json"
-RESULTS_PATH = DATA_DIR / "clinical_benchmark_results.json"
+
+# Per-domain dataset / results filenames — uniform <domain>_* naming.
+DATASET_FILES = {
+    "healthcare": "healthcare_reasoning_benchmark.json",
+    "legal": "legal_reasoning_benchmark.json",
+    "finance": "finance_reasoning_benchmark.json",
+}
+RESULTS_FILES = {
+    "healthcare": "healthcare_benchmark_results.json",
+    "legal": "legal_benchmark_results.json",
+    "finance": "finance_benchmark_results.json",
+}
+
+# Monolithic single-prompt baseline per domain. The ADAPT-AI pipeline is the
+# treatment; this dumb single-call expert is the control. Each prompt mirrors
+# the original clinical one's structure (answer fully; correct false premises).
+BASELINE_PROMPTS = {
+    "healthcare": (
+        "You are a clinical expert. "
+        "Answer the following medical question accurately and completely. "
+        "If the question contains a false or dangerous premise, correct it clearly."
+    ),
+    "legal": (
+        "You are a legal research expert. "
+        "Answer the following legal question accurately and completely. "
+        "If the question contains a false or dangerous premise, correct it clearly. "
+        "This is legal information, not legal advice."
+    ),
+    "finance": (
+        "You are a financial analysis expert. "
+        "Answer the following financial question accurately and completely. "
+        "If the question contains a false or dangerous premise, correct it clearly. "
+        "This is general information, not personalized financial advice."
+    ),
+}
+
+BASELINE_VARIANTS = ("b0_bare", "b1_disclaimer", "b2_rag", "b3_persona", "full")
+
+_DISCLAIMER_INSTRUCTION = (
+    " End with a one-sentence disclaimer advising the reader to consult a "
+    "licensed professional before acting."
+)
+
+
+def build_baseline_prompt(variant: str, domain: str) -> str:
+    """System prompt for a baseline variant.
+
+    b2_rag and b3_persona reuse this prompt and prepend retrieved context
+    to the user message at call time in run_baseline().
+    """
+    from adapt_ai.domain.profiles import get_domain_profile
+    profile = get_domain_profile(domain)
+    base = BASELINE_PROMPTS[domain]
+    if variant == "b0_bare":
+        return base
+    if variant in ("b1_disclaimer", "b2_rag"):
+        return base + _DISCLAIMER_INSTRUCTION
+    if variant == "b3_persona":
+        return profile.personas["primary"] + _DISCLAIMER_INSTRUCTION
+    raise ValueError(f"Not a single-call baseline variant: {variant!r}")
+
 
 HAIKU_INPUT_PRICE = 0.80 / 1_000_000
 HAIKU_OUTPUT_PRICE = 4.00 / 1_000_000
@@ -59,7 +116,7 @@ def compute_cost(input_tokens: int, output_tokens: int) -> float:
 
 
 def score_with_evaluator(
-    evaluator: ClinicalEvaluator,
+    evaluator: ResponseEvaluator,
     prediction: str,
     item: dict,
 ) -> dict:
@@ -95,16 +152,17 @@ def _completed_ids(results: list[dict]) -> set:
 
 # ── ADAPT-AI pipeline ─────────────────────────────────────────────────────────
 
-async def run_adapt_ai(pipeline, item: dict, q_id: int) -> dict:
+async def run_adapt_ai(pipeline, item: dict, q_id: int, domain: str) -> dict:
     query = item["query"]
+    session_id = f"{domain}-bench-{q_id}"
     t0 = time.perf_counter()
     try:
         result = await pipeline.ainvoke(
             {
                 "query": query,
                 "subject_id": None,
-                "domain": "healthcare",
-                "session_id": f"clinical-bench-{q_id}",
+                "domain": domain,
+                "session_id": session_id,
                 "use_rat": False,      # overwritten by intent_and_retrieve node
                 "retrieved_context": "",
                 "primary_response": "",
@@ -117,7 +175,7 @@ async def run_adapt_ai(pipeline, item: dict, q_id: int) -> dict:
                 "llm_usage": None,
                 "error": None,
             },
-            config={"configurable": {"thread_id": f"clinical-{q_id}"}},
+            config={"configurable": {"thread_id": session_id}},
         )
     except Exception as e:
         elapsed = time.perf_counter() - t0
@@ -137,7 +195,7 @@ async def run_adapt_ai(pipeline, item: dict, q_id: int) -> dict:
     if not usage:
         # Fallback: on the retry path aggregate_response may not receive the
         # accumulator via state (MemorySaver isolation edge case). Read directly.
-        acc = get_accumulator(f"clinical-bench-{q_id}")
+        acc = get_accumulator(session_id)
         if acc:
             usage = acc.to_dict()
     return {
@@ -158,19 +216,19 @@ async def run_adapt_ai(pipeline, item: dict, q_id: int) -> dict:
 
 # ── Monolithic baseline ───────────────────────────────────────────────────────
 
-def run_baseline(client: Anthropic, item: dict) -> dict:
+def run_baseline(client: Anthropic, item: dict, system_prompt: str,
+                 retrieved_context: str = "") -> dict:
+    user_content = item["query"]
+    if retrieved_context:
+        user_content = f"Context:\n{retrieved_context}\n\nQuery:\n{user_content}"
     t0 = time.perf_counter()
     try:
         resp = client.messages.create(
             model=settings.model_name,
-            max_tokens=1024,
+            max_tokens=settings.max_tokens,  # equal token budget — concept recall is length-sensitive
             temperature=0.3,
-            system=(
-                "You are a clinical expert. "
-                "Answer the following medical question accurately and completely. "
-                "If the question contains a false or dangerous premise, correct it clearly."
-            ),
-            messages=[{"role": "user", "content": item["query"]}],
+            system=system_prompt,
+            messages=[{"role": "user", "content": user_content}],
         )
     except Exception as e:
         return {
@@ -190,28 +248,32 @@ def run_baseline(client: Anthropic, item: dict) -> dict:
         "cost": round(cost, 6),
         "input_tokens": resp.usage.input_tokens,
         "output_tokens": resp.usage.output_tokens,
+        "response_len_chars": len(text),
         "error": None,
     }
 
 
 # ── Main benchmark loop ───────────────────────────────────────────────────────
 
-async def benchmark(items: list[dict], resume: bool, use_bertscore: bool, use_llm_judge: bool, include_quality: bool = True) -> None:
+async def benchmark(items: list[dict], domain: str, results_path: Path, baseline_prompt: str,
+                    resume: bool, use_bertscore: bool, use_llm_judge: bool,
+                    include_quality: bool = True,
+                    baseline_variant: str = "b1_disclaimer") -> None:
     client = Anthropic(api_key=settings.anthropic_api_key.get_secret_value())
-    evaluator = ClinicalEvaluator(
+    evaluator = ResponseEvaluator(
         use_bertscore=use_bertscore,
         use_llm_judge=use_llm_judge,
         anthropic_api_key=settings.anthropic_api_key.get_secret_value() if use_llm_judge else None,
     )
 
-    print("Initialising ADAPT-AI pipeline (LangGraph + MCP)…")
+    print(f"Initialising ADAPT-AI pipeline (LangGraph + MCP) for domain='{domain}'…")
     mcp_client = build_mcp_client()
     pipeline = build_graph(mcp_client, include_quality=include_quality)
     print("Pipeline ready.\n")
 
     results: list[dict] = []
-    if resume and RESULTS_PATH.exists():
-        results = json.loads(RESULTS_PATH.read_text(encoding="utf-8"))
+    if resume and results_path.exists():
+        results = json.loads(results_path.read_text(encoding="utf-8"))
         print(f"Resuming from {len(results)} completed questions.")
 
     done_ids = _completed_ids(results)
@@ -225,8 +287,14 @@ async def benchmark(items: list[dict], resume: bool, use_bertscore: bool, use_ll
         category = item["category"]
         print(f"Q{q_id + 1:02d}/{total} [{category}] ", end="", flush=True)
 
-        adapt_raw = await run_adapt_ai(pipeline, item, q_id)
-        base_raw = run_baseline(client, item)
+        adapt_raw = await run_adapt_ai(pipeline, item, q_id, domain)
+        sys_prompt = build_baseline_prompt(baseline_variant, domain)
+        # For b2_rag/b3_persona, pass the same retrieved context as ADAPT-AI used.
+        rag_ctx = adapt_raw.get("retrieved_context_text", "")
+        base_raw = run_baseline(
+            client, item, sys_prompt,
+            retrieved_context=rag_ctx if baseline_variant in ("b2_rag", "b3_persona") else "",
+        )
 
         adapt_scores: dict = {}
         base_scores: dict = {}
@@ -247,25 +315,27 @@ async def benchmark(items: list[dict], resume: bool, use_bertscore: bool, use_ll
             f"[{rat_str}] ({adapt_raw['time']:.1f}s / {base_raw['time']:.1f}s)"
         )
 
+        adapt_result = {**adapt_raw, **adapt_scores}
+        adapt_result["response_len_chars"] = len(adapt_raw["response"])
         results.append({
             "id": q_id,
             "category": category,
             "query": item["query"][:120],
-            "adapt_ai": {**adapt_raw, **adapt_scores},
+            "adapt_ai": adapt_result,
             "baseline": {**base_raw, **base_scores},
         })
 
         DATA_DIR.mkdir(parents=True, exist_ok=True)
-        RESULTS_PATH.write_text(json.dumps(results, indent=2), encoding="utf-8")
+        results_path.write_text(json.dumps(results, indent=2), encoding="utf-8")
 
         if q_id < total - 1:
             time.sleep(SLEEP_BETWEEN_QUESTIONS)
 
-    print(f"\nDone. Results saved to {RESULTS_PATH}")
-    _print_summary(results)
+    print(f"\nDone. Results saved to {results_path}")
+    _print_summary(results, domain)
 
 
-def _print_summary(results: list[dict]) -> None:
+def _print_summary(results: list[dict], domain: str = "healthcare") -> None:
     from collections import defaultdict
 
     categories = defaultdict(lambda: {"adapt": [], "base": []})
@@ -286,7 +356,7 @@ def _print_summary(results: list[dict]) -> None:
 
     n = len(results)
     print(f"\n{'='*60}")
-    print(f"  Clinical Reasoning Benchmark  ({n} questions)")
+    print(f"  {domain.title()} Reasoning Benchmark  ({n} questions)")
     print(f"{'='*60}")
     print(f"\nOverall mean score (0-1):")
     adapt_avg = avg(all_adapt)
@@ -310,28 +380,46 @@ def _print_summary(results: list[dict]) -> None:
 
 def main() -> None:
     parser = argparse.ArgumentParser()
+    parser.add_argument("--domain", choices=sorted(DATASET_FILES), default="healthcare",
+                        help="Regulated domain to benchmark (default: healthcare)")
     parser.add_argument("--questions", type=int, default=None, help="Limit to first N questions")
     parser.add_argument("--resume", action="store_true", help="Skip already-completed questions")
     parser.add_argument("--no-bertscore", action="store_true", help="Skip BERTScore (faster)")
     parser.add_argument("--judge", action="store_true", help="Enable LLM-as-judge correctness scoring (+30%% weight)")
     parser.add_argument("--no-quality", action="store_true",
                         help="Ablation: run without the quality agent")
+    parser.add_argument(
+        "--baseline-variant",
+        choices=("b0_bare", "b1_disclaimer", "b2_rag", "b3_persona"),
+        default="b1_disclaimer",
+        dest="baseline_variant",
+        help="Which single-call baseline to compare against (default: b1_disclaimer — fair headline control)",
+    )
     args = parser.parse_args()
 
-    if not DATASET_PATH.exists():
-        print(f"Dataset not found at {DATASET_PATH}")
+    domain = args.domain
+    dataset_path = DATA_DIR / DATASET_FILES[domain]
+    results_path = DATA_DIR / RESULTS_FILES[domain]
+    baseline_prompt = BASELINE_PROMPTS[domain]
+
+    if not dataset_path.exists():
+        print(f"Dataset not found at {dataset_path}")
         sys.exit(1)
 
-    items = json.loads(DATASET_PATH.read_text(encoding="utf-8"))
+    items = json.loads(dataset_path.read_text(encoding="utf-8"))
     if args.questions:
         items = items[: args.questions]
 
     asyncio.run(benchmark(
         items,
+        domain=domain,
+        results_path=results_path,
+        baseline_prompt=baseline_prompt,
         resume=args.resume,
         use_bertscore=not args.no_bertscore,
         use_llm_judge=args.judge,
         include_quality=not args.no_quality,
+        baseline_variant=args.baseline_variant,
     ))
 
 
