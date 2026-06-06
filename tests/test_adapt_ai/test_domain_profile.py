@@ -191,7 +191,7 @@ def user_msg_starts_with(fake_prov, prefix: str) -> bool:
 @pytest.mark.asyncio
 async def test_aggregate_response_healthcare_disclaimer():
     """aggregate_response appends the healthcare disclaimer for domain='healthcare'."""
-    from adapt_ai.agents.graph import aggregate_response
+    from adapt_ai.agents.graph import make_aggregate_node
     from adapt_ai.llmops.usage import new_accumulator
     get_domain_profile.cache_clear()
 
@@ -205,6 +205,7 @@ async def test_aggregate_response_healthcare_disclaimer():
         "quality_result": {"score": 0.9},
         "agent_statuses": {},
     }
+    aggregate_response = make_aggregate_node(append_disclaimer=True)
     result = await aggregate_response(state)
     assert "Healthcare providers must verify" in result["final_response"]
 
@@ -220,7 +221,7 @@ async def test_aggregate_response_legal_disclaimer(tmp_path, monkeypatch):
     shutil.copy(FIXTURES / "legal_profile.json", tmp_path / "legal.json")
     shutil.copy(ADAPT_AI_ROOT / "domain" / "profiles" / "healthcare.json", tmp_path / "healthcare.json")
 
-    from adapt_ai.agents.graph import aggregate_response
+    from adapt_ai.agents.graph import make_aggregate_node
     from adapt_ai.llmops.usage import new_accumulator
 
     sid = "test-disclaimer-legal"
@@ -233,6 +234,7 @@ async def test_aggregate_response_legal_disclaimer(tmp_path, monkeypatch):
         "quality_result": {"score": 0.9},
         "agent_statuses": {},
     }
+    aggregate_response = make_aggregate_node(append_disclaimer=True)
     result = await aggregate_response(state)
     assert "legal research support" in result["final_response"].lower()
     assert "Healthcare providers" not in result["final_response"]

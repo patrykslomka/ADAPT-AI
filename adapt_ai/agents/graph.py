@@ -63,33 +63,36 @@ def make_retrieval_node(mcp_client: MCPClient):
 
 # ── Node: aggregate final response ────────────────────────────────────────────
 
-async def aggregate_response(state: AgentState) -> dict:
-    primary = state.get("primary_response", "")
-    compliance = state.get("compliance_result", {})
-    quality = state.get("quality_result", {})
+def make_aggregate_node(append_disclaimer: bool = True):
+    async def aggregate_response(state: AgentState) -> dict:
+        primary = state.get("primary_response", "")
+        compliance = state.get("compliance_result", {})
+        quality = state.get("quality_result", {})
 
-    acc = get_accumulator(state["session_id"])
-    llm_usage = acc.to_dict() if acc is not None else None
+        acc = get_accumulator(state["session_id"])
+        llm_usage = acc.to_dict() if acc is not None else None
 
-    parts = [primary]
+        parts = [primary]
 
-    if compliance.get("status") == "warning" and compliance.get("issues"):
-        warnings = "\n".join(
-            f"- {i.get('description', i)}" for i in compliance["issues"]
-        )
-        parts.append(f"\n**Compliance Considerations:**\n{warnings}")
+        if compliance.get("status") == "warning" and compliance.get("issues"):
+            warnings = "\n".join(
+                f"- {i.get('description', i)}" for i in compliance["issues"]
+            )
+            parts.append(f"\n**Compliance Considerations:**\n{warnings}")
 
-    if quality.get("score", 1.0) < 0.7:
-        parts.append(
-            f"\n**Note:** Response flagged for quality review "
-            f"(confidence: {quality.get('score', 0):.0%})"
-        )
+        if quality.get("score", 1.0) < 0.7:
+            parts.append(
+                f"\n**Note:** Response flagged for quality review "
+                f"(confidence: {quality.get('score', 0):.0%})"
+            )
 
-    profile = get_domain_profile(state.get("domain"))
-    if profile.disclaimer:
-        parts.append(f"\n---\n{profile.disclaimer}")
+        if append_disclaimer:
+            profile = get_domain_profile(state.get("domain"))
+            if profile.disclaimer:
+                parts.append(f"\n---\n{profile.disclaimer}")
 
-    return {"final_response": "\n".join(parts), "llm_usage": llm_usage}
+        return {"final_response": "\n".join(parts), "llm_usage": llm_usage}
+    return aggregate_response
 
 
 # ── Node: fan-in join after parallel compliance + quality ──────────────────────
@@ -121,6 +124,8 @@ def route_after_review(
 def build_graph(
     mcp_client: MCPClient,
     include_quality: bool = True,
+    include_compliance: bool = True,
+    append_disclaimer: bool = True,
     provider: LLMProvider | None = None,
 ) -> "CompiledGraph":
     if provider is None:
@@ -131,22 +136,24 @@ def build_graph(
 
     graph.add_node("intent_and_retrieve", make_retrieval_node(mcp_client))
     graph.add_node("primary_agent", make_primary_node(mcp_client, provider))
-    graph.add_node("compliance_agent", make_compliance_node(mcp_client))
+    if include_compliance:
+        graph.add_node("compliance_agent", make_compliance_node(mcp_client))
     if include_quality:
         graph.add_node("quality_agent", make_quality_node(mcp_client, provider))
     graph.add_node("review_results", review_results)
-    graph.add_node("aggregate_response", aggregate_response)
+    graph.add_node("aggregate_response", make_aggregate_node(append_disclaimer))
 
     graph.set_entry_point("intent_and_retrieve")
     graph.add_edge("intent_and_retrieve", "primary_agent")
 
-    graph.add_edge("primary_agent", "compliance_agent")
+    if include_compliance:
+        graph.add_edge("primary_agent", "compliance_agent")
+        graph.add_edge("compliance_agent", "review_results")
     if include_quality:
         graph.add_edge("primary_agent", "quality_agent")
-
-    graph.add_edge("compliance_agent", "review_results")
-    if include_quality:
         graph.add_edge("quality_agent", "review_results")
+    if not include_compliance and not include_quality:
+        graph.add_edge("primary_agent", "review_results")
 
     graph.add_conditional_edges(
         "review_results",

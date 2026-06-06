@@ -30,3 +30,28 @@ async def test_pipeline_without_quality_agent_has_no_quality_status():
 async def test_pipeline_with_quality_agent_records_quality_status():
     result = await _run(include_quality=True)
     assert "quality" in result["agent_statuses"]
+
+
+def test_disclaimer_can_be_disabled(fake_mcp):
+    """aggregate_response must omit the profile disclaimer when append_disclaimer=False."""
+    from adapt_ai.agents.graph import build_graph
+    from adapt_ai.domain.profiles import get_domain_profile
+    import asyncio
+
+    g = build_graph(fake_mcp, include_quality=False, append_disclaimer=False,
+                    provider=FakeProvider())
+    state = make_state(query="q", domain="healthcare")
+    out = asyncio.run(
+        g.ainvoke(state, config={"configurable": {"thread_id": "test-ablation-1"}})
+    )
+    profile = get_domain_profile("healthcare")
+    assert profile.disclaimer not in out.get("final_response", "")
+
+
+def test_compliance_can_be_disabled(fake_mcp):
+    """build_graph with include_compliance=False must not include compliance_agent node."""
+    from adapt_ai.agents.graph import build_graph
+
+    g = build_graph(fake_mcp, include_compliance=False, provider=FakeProvider())
+    node_names = set(g.get_graph().nodes.keys())
+    assert "compliance_agent" not in node_names
