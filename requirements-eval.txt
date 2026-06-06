@@ -1,0 +1,8 @@
+# Evaluation & benchmark construction (not needed to run the pipeline)
+datasets>=2.18.0          # build_benchmark.py — HF gold datasets
+scipy>=1.12.0             # analyze_results.py — Wilcoxon, effect sizes
+sacrebleu>=2.4.0
+rouge-score>=0.1.2
+bert-score>=0.3.13
+nltk>=3.8.1
+openai>=1.30.0            # Ollama (OpenAI-compatible) + optional GPT judge
