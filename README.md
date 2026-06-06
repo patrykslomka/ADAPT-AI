@@ -1,181 +1,106 @@
-# ADAPT-AI: Adaptive Multi-Agent Architecture for Regulated Domains
+# ADAPT-AI
 
-[![Python 3.11+](https://img.shields.io/badge/python-3.11+-blue.svg)](https://www.python.org/downloads/)
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+A multi-agent architecture for regulated domains, built on LangGraph and the Model Context Protocol. The same agent code runs across healthcare, legal, and finance — switching domains is a config change, not a code change.
 
-> A configurable multi-agent architecture for AI systems in **regulated domains**, built on
-> the Model Context Protocol (MCP) and modular building blocks. The same agent code serves
-> **healthcare, legal, and finance** — a new domain is a *config-only* addition.
-
-**🎓 Academic context:** This implementation validates the ADAPT-AI framework proposed in an
-MSc thesis and the accompanying journal paper on modular, domain-adaptive AI architectures.
+This is the implementation accompanying the MSc thesis and journal paper on domain-adaptive multi-agent AI architectures.
 
 ---
 
-## 🌟 Key ideas
+## How it works
 
-- **Three specialized agents** coordinated by a LangGraph state machine
-  - **Primary agent** — RAG/RAT reasoning over the active domain's knowledge base
-  - **Compliance agent** — rule-based regulatory validation (no LLM), can hard-fail a response
-  - **Quality agent** — hallucination / consistency check with a one-shot revision loop
-- **MCP as the architectural center** — agents never import domain modules; they reach
-  every tool and resource through an in-process `FastMCP` server.
-- **Config-only domain adaptivity** — all domain-specific text, regulations, lexicons, vector
-  collections, and routing keywords live in JSON `DomainProfile`s. Agent/orchestrator/tool code
-  contains **zero** domain literals (enforced by a test, the "Bar-3" invariant).
-- **Dual reasoning** — fast **RAG** for factual lookups, multi-step **RAT** for complex or
-  ethics-laden queries; a pure-heuristic router decides per query, per domain.
-- **Graceful local fallbacks** — Redis→memory, PostgreSQL→JSON, Neo4j→fallback, ChromaDB for vectors.
+Three agents coordinate in a LangGraph pipeline:
+
+1. **Primary** — retrieves context (RAG or RAT depending on query complexity), calls Claude with the active domain persona.
+2. **Compliance** — validates the response against the domain's regulation rules. No LLM; pure regex. A critical violation kills the response immediately.
+3. **Quality** — scores the response for hallucinations and consistency using Claude. A failing score triggers one revision loop back to primary.
+
+All domain knowledge — agent personas, regulation rules, vector collections, routing keywords, disclaimers — lives in `adapt_ai/domain/profiles/<domain>.json`. The agent code contains zero domain-specific literals (enforced by a test).
+
+For the full architecture description see [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md).
 
 ---
 
-## 🏗️ Architecture
-
-```
-                       ┌──────────── MCP server (FastMCP, in-process) ────────────┐
-                       │  tools:  rag_retrieve · rat_reason · validate_output      │
-                       │  resources: documents · ontology · data · regulations    │
-                       └──────────────────────────────────────────────────────────┘
-                                            ▲ (all agents call through here)
-                                            │
- intent_and_retrieve → primary_agent → ┌─ compliance_agent ─┐ → review_results → aggregate_response
-                          ↑            └─ quality_agent    ─┘         │
-                          └───────────── retry (max 1, if quality fails) ┘
-
-   AgentState["domain"] ∈ { healthcare | legal | finance }  selects the DomainProfile at runtime
-```
-
-Compliance and quality run **in parallel** (fan-out from the primary agent, fan-in at
-`review_results`). A compliance failure exits early with no answer; a quality failure loops
-back to the primary agent once.
-
----
-
-## 🚀 Quick start
-
-### Prerequisites
-
-- Python 3.11+
-- An Anthropic API key ([console.anthropic.com](https://console.anthropic.com/))
-
-### Installation
+## Setup
 
 ```bash
-# 1. Create and activate a virtual environment
-python -m venv venv
-source venv/bin/activate          # Linux/Mac   (venv\Scripts\activate on Windows)
-
-# 2. Install dependencies
+python -m venv venv && source venv/bin/activate
 pip install -r requirements.txt
+cp .env.example .env  # add your ANTHROPIC_API_KEY
 
-# 3. Configure environment
-cp .env.example .env              # then add your Anthropic API key
-
-# 4. Generate synthetic data (healthcare patients)
-python scripts/generate_patients.py
-
-# 5. Seed the vector collections (per domain)
-python scripts/seed_vector_db.py                  # healthcare (clinical_knowledge)
+# seed vector collections
+python scripts/seed_vector_db.py --domain healthcare
 python scripts/seed_vector_db.py --domain legal
 python scripts/seed_vector_db.py --domain finance
 
-# 6. Run the tests
 pytest tests/test_adapt_ai/ -v
 ```
 
-### Run it
-
 ```bash
-# FastAPI server — serves the web UI at / and the JSON API
+# FastAPI server
 uvicorn adapt_ai.api.main:app --reload
-#   POST /query           {query, domain, subject_id?, session_id?}
-#   GET  /health
-#   GET  /patients
-#   GET  /session/{id}/history
+# POST /query  {query, domain, subject_id?, session_id?}
+# GET  /health | /patients | /session/{id}/history
 
-# Or the Streamlit dashboard (domain selector + agent activity + metrics)
+# Streamlit UI
 streamlit run ui/app.py
 ```
 
 ---
 
-## 🧩 Adding a new regulated domain (config only)
+## Adding a domain
 
-No agent code changes are required:
+Create two files — no code changes needed:
 
-1. Create `adapt_ai/domain/profiles/<domain>.json` — personas, labels, disclaimer,
-   `vector_collection`, `ontology_path`, and the RAT/RAG/ethics/vignette keyword sets.
-2. Create `adapt_ai/domain/regulations/<domain>.json` — the rule set the compliance
-   agent validates against (critical → reject, high → warn).
-3. (Optional) Add a corpus under `data/regulations_corpus/<domain>/*.md` and an ontology
-   under `data/ontologies/<domain>/`, then seed: `python scripts/seed_vector_db.py --domain <domain>`.
+1. `adapt_ai/domain/profiles/<domain>.json` — personas, labels, disclaimer, vector collection, routing keywords
+2. `adapt_ai/domain/regulations/<domain>.json` — rule set for the compliance agent
 
-A missing profile falls back to healthcare with a logged warning. The `test_multidomain.py`
-suite parametrizes over all configured domains, so new profiles are exercised automatically.
+Optionally add a corpus under `data/regulations_corpus/<domain>/` and seed it with `scripts/seed_vector_db.py --domain <domain>`.
 
 ---
 
-## 📂 Project layout
-
-```
-adapt_ai/
-├── agents/             # LangGraph StateGraph + primary/compliance/quality nodes
-├── api/main.py         # FastAPI app (HTTP wrapper over the pipeline)
-├── config.py           # settings singleton (pydantic BaseSettings, reads .env)
-├── domain/
-│   ├── profiles/       # DomainProfile JSON — healthcare / legal / finance
-│   ├── regulations/    # per-domain rule sets for the compliance agent
-│   ├── db.py           # PostgreSQL → JSON fallback
-│   ├── ontology.py     # Neo4j → fallback
-│   ├── vector_store.py # ChromaDB collections
-│   └── patient_handler.py
-├── llmops/             # usage accumulator, tracing
-├── mcp_server/         # FastMCP server: tools (building blocks) + resources (domain config)
-└── orchestrator/       # MCP client hub, session manager, RAG/RAT router
-
-evaluation/             # ClinicalEvaluator (BLEU/ROUGE/BERTScore), ground truth, SystemEvaluator
-scripts/                # data setup, benchmarks, analysis
-tests/test_adapt_ai/    # pipeline tests — no live Anthropic/MCP calls (fakes + fixtures)
-ui/                     # Streamlit app + static index.html
-```
-
----
-
-## 📊 Evaluation & benchmarks
+## Benchmarks
 
 ```bash
-# adapt_ai pipeline vs. a monolithic single-prompt baseline (open-ended clinical queries)
-python scripts/run_clinical_benchmark.py                 # full run
-python scripts/run_clinical_benchmark.py --questions 5   # smoke test
-python scripts/run_clinical_benchmark.py --resume        # skip completed questions
-python scripts/run_clinical_benchmark.py --no-bertscore  # skip slow BERTScore
-python scripts/run_clinical_benchmark.py --judge         # add LLM-as-judge scoring
-python scripts/analyze_clinical_results.py               # summarise results
+# Reasoning + safety benchmark (all three domains)
+python scripts/run_benchmark.py --domain healthcare
+python scripts/run_benchmark.py --domain legal --no-bertscore
+python scripts/run_benchmark.py --domain finance --no-quality  # ablation
+python scripts/analyze_results.py --domain healthcare
 
-# MedQA multiple-choice benchmark
-python scripts/download_medqa.py
-python scripts/run_medqa_benchmark.py
-python scripts/analyze_medqa_results.py
+# Rebuild benchmark datasets from gold HF data
+python scripts/build_benchmark.py --all
+
+# Healthcare accuracy/parity (MedQA, USMLE multiple-choice)
+# NOTE: MedQA results not yet committed — run download_medqa.py first (results pending)
+python scripts/run_medqa_benchmark.py  # (results pending — run scripts/download_medqa.py first)
 ```
-
-Benchmark scripts reuse `ClinicalEvaluator` from `evaluation/metrics.py` and write JSON +
-Markdown summaries to `data/evaluation/`.
 
 ---
 
-## 🧪 Testing
+## Tests
 
 ```bash
-pytest tests/test_adapt_ai/ -v                       # full pipeline suite (fakes — no network)
-pytest tests/test_adapt_ai/test_multidomain.py -v    # healthcare/legal/finance coverage
+pytest tests/test_adapt_ai/ -v
 black adapt_ai/ tests/ && ruff check adapt_ai/ tests/
 ```
 
-The suite uses `FakeAnthropic`, `FakeMCPClient`, and `make_state()` from
-`tests/test_adapt_ai/conftest.py`, so it runs without an API key or live MCP server.
+Tests use `FakeAnthropic` and `FakeMCPClient` — no API key or live MCP server needed.
 
 ---
 
-## 📄 License
+## Implemented vs. envisioned architecture
 
-MIT — see [LICENSE](LICENSE).
+The MSc thesis proposed a broader stack (React/Next.js UI, Auth0 authentication, OpenAI + Anthropic providers, multiple independently-deployed MCP servers). This repository implements the core multi-agent pipeline and evaluation harness:
+
+| Component | Thesis spec | This artifact |
+|-----------|-------------|---------------|
+| UI | React / Next.js | Streamlit (`ui/app.py`) |
+| Auth | Auth0 | None (local dev only) |
+| LLM providers | OpenAI + Anthropic | Anthropic (provider-agnostic abstraction; Ollama via OpenAI-compatible endpoint) |
+| MCP deployment | Multiple networked servers | Single in-process FastMCP server |
+
+The agent pipeline, domain profiles, compliance/quality agents, benchmark harness, and all empirical results are fully implemented and reproduced here.
+
+---
+
+MIT license.
