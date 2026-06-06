@@ -5,6 +5,8 @@ from typing import Any
 
 import pytest
 
+from adapt_ai.llmops.providers import CompletionResult, LLMProvider
+
 
 class _FakeMessages:
     """Records calls; returns a canned Anthropic-shaped response."""
@@ -56,6 +58,33 @@ class FakeMCPClient:
 @pytest.fixture
 def fake_mcp() -> FakeMCPClient:
     return FakeMCPClient()
+
+
+class FakeProvider(LLMProvider):
+    """Stand-in for any LLMProvider — returns canned text, no network."""
+
+    def __init__(self, text: str = "ANSWER: A", in_tok: int = 100, out_tok: int = 50) -> None:
+        self.model = "fake-model"
+        self._text = text
+        self._in = in_tok
+        self._out = out_tok
+        self.calls: list[dict] = []
+
+    def complete(self, *, system: str, user: str, max_tokens: int,
+                 temperature: float) -> CompletionResult:
+        self.calls.append({"system": system, "user": user,
+                           "max_tokens": max_tokens, "temperature": temperature})
+        return CompletionResult(
+            text=self._text,
+            input_tokens=self._in,
+            output_tokens=self._out,
+            model=self.model,
+        )
+
+
+@pytest.fixture
+def fake_provider() -> FakeProvider:
+    return FakeProvider()
 
 
 def make_state(query: str = "What is the first-line treatment for hypertension?",

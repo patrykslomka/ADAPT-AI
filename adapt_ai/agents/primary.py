@@ -4,11 +4,10 @@ import logging
 import time
 from typing import TYPE_CHECKING
 
-from anthropic import Anthropic
-
 from adapt_ai.agents.state import AgentState
 from adapt_ai.config import settings
 from adapt_ai.domain.profiles import get_domain_profile
+from adapt_ai.llmops.providers import LLMProvider
 from adapt_ai.llmops.usage import record_llm_call
 
 if TYPE_CHECKING:
@@ -17,8 +16,7 @@ if TYPE_CHECKING:
 logger = logging.getLogger(__name__)
 
 
-def make_primary_node(mcp_client: "MCPClient", anthropic_client: Anthropic):
-    """Return a LangGraph node function for the Primary Domain Agent."""
+def make_primary_node(mcp_client: "MCPClient", provider: LLMProvider):
 
     async def primary_agent(state: AgentState) -> dict:
         query = state["query"]
@@ -39,28 +37,26 @@ def make_primary_node(mcp_client: "MCPClient", anthropic_client: Anthropic):
 
         try:
             t0 = time.perf_counter()
-            resp = anthropic_client.messages.create(
-                model=settings.model_name,
+            result = provider.complete(
+                system=profile.personas["primary"],
+                user=user_content,
                 max_tokens=settings.max_tokens,
                 temperature=settings.temperature,
-                system=profile.personas["primary"],
-                messages=[{"role": "user", "content": user_content}],
             )
             latency = time.perf_counter() - t0
             record_llm_call(
                 agent="primary" if not feedback else "primary_retry",
-                model=settings.model_name,
-                input_tokens=resp.usage.input_tokens,
-                output_tokens=resp.usage.output_tokens,
+                model=result.model,
+                input_tokens=result.input_tokens,
+                output_tokens=result.output_tokens,
                 latency_s=latency,
                 run_id=state["session_id"],
             )
-            response_text = resp.content[0].text
+            response_text = result.text
             statuses = dict(state.get("agent_statuses", {}))
             statuses["primary"] = "approved"
-            # Increment revision_count here (the only place state is safely updated).
-            # On a retry call, feedback is non-empty; incrementing signals to
-            # route_after_quality that one retry has already occurred.
+            # Increment only on retry (feedback non-empty) — signals to route_after_review
+            # that one revision has already occurred.
             return {
                 "primary_response": response_text,
                 "revision_count": revision + (1 if feedback else 0),

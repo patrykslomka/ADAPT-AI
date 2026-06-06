@@ -4,23 +4,22 @@ import logging
 import time
 from typing import List
 
-from anthropic import Anthropic
-
 from adapt_ai.config import settings
 from adapt_ai.domain.profiles import get_domain_profile
 from adapt_ai.domain.vector_store import VectorStore
+from adapt_ai.llmops.providers import get_provider as _get_provider_factory, LLMProvider
 from adapt_ai.llmops.usage import record_llm_call
 
 logger = logging.getLogger(__name__)
 
-_client: Anthropic | None = None
+_provider: LLMProvider | None = None
 
 
-def _get_client() -> Anthropic:
-    global _client
-    if _client is None:
-        _client = Anthropic(api_key=settings.anthropic_api_key.get_secret_value())
-    return _client
+def _get_provider() -> LLMProvider:
+    global _provider
+    if _provider is None:
+        _provider = _get_provider_factory()
+    return _provider
 
 
 async def rat_reason(
@@ -41,27 +40,26 @@ async def rat_reason(
     n_steps = max_steps or settings.rat_max_steps
     profile = get_domain_profile(domain)
     store = VectorStore.for_collection(profile.vector_collection)
-    client = _get_client()
+    provider = _get_provider()
 
     accumulated_context = context
 
     # Step 1: Decompose the query into sub-questions
     t0 = time.perf_counter()
-    decompose_resp = client.messages.create(
-        model=settings.model_name,
+    decompose_result = provider.complete(
+        system=profile.personas["rat_decompose"],
+        user=f'{profile.label("query")}:\n{query}',
         max_tokens=512,
         temperature=0.1,
-        system=profile.personas["rat_decompose"],
-        messages=[{"role": "user", "content": f'{profile.label("query")}:\n{query}'}],
     )
     record_llm_call(
         agent="rat.decompose",
-        model=settings.model_name,
-        input_tokens=decompose_resp.usage.input_tokens,
-        output_tokens=decompose_resp.usage.output_tokens,
+        model=decompose_result.model,
+        input_tokens=decompose_result.input_tokens,
+        output_tokens=decompose_result.output_tokens,
         latency_s=time.perf_counter() - t0,
     )
-    sub_questions_text = decompose_resp.content[0].text.strip()
+    sub_questions_text = decompose_result.text.strip()
     sub_questions: List[str] = [
         q.strip().lstrip("0123456789.-) ") for q in sub_questions_text.split("\n") if q.strip()
     ][:n_steps]
@@ -79,28 +77,22 @@ async def rat_reason(
 
     # Step 5: Final synthesis — produce the reasoned answer
     t0 = time.perf_counter()
-    synthesis_resp = client.messages.create(
-        model=settings.model_name,
+    synthesis_result = provider.complete(
+        system=profile.personas["rat_synthesis"],
+        user=(
+            f"Question:\n{query}\n\n"
+            f'{profile.label("context")}:\n{combined_context}\n\n'
+            "Reason through this carefully and provide your answer."
+        ),
         max_tokens=settings.max_tokens,
         temperature=settings.temperature,
-        system=profile.personas["rat_synthesis"],
-        messages=[
-            {
-                "role": "user",
-                "content": (
-                    f"Question:\n{query}\n\n"
-                    f'{profile.label("context")}:\n{combined_context}\n\n'
-                    "Reason through this carefully and provide your answer."
-                ),
-            }
-        ],
     )
     record_llm_call(
         agent="rat.synthesis",
-        model=settings.model_name,
-        input_tokens=synthesis_resp.usage.input_tokens,
-        output_tokens=synthesis_resp.usage.output_tokens,
+        model=synthesis_result.model,
+        input_tokens=synthesis_result.input_tokens,
+        output_tokens=synthesis_result.output_tokens,
         latency_s=time.perf_counter() - t0,
     )
 
-    return synthesis_resp.content[0].text
+    return synthesis_result.text

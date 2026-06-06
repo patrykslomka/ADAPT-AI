@@ -135,12 +135,12 @@ async def test_primary_agent_uses_legal_persona(tmp_path, monkeypatch):
     # Also copy healthcare for the fallback path
     shutil.copy(ADAPT_AI_ROOT / "domain" / "profiles" / "healthcare.json", tmp_path / "healthcare.json")
 
-    from tests.test_adapt_ai.conftest import FakeAnthropic, FakeMCPClient, make_state
+    from tests.test_adapt_ai.conftest import FakeProvider, FakeMCPClient, make_state
     from adapt_ai.agents.primary import make_primary_node
 
-    fake_ant = FakeAnthropic(text="ANSWER: B")
+    fake_prov = FakeProvider(text="ANSWER: B")
     mcp = FakeMCPClient()
-    node = make_primary_node(mcp, fake_ant)
+    node = make_primary_node(mcp, fake_prov)
 
     state = make_state(
         query="Who bears liability for a breach of contract?",
@@ -149,14 +149,14 @@ async def test_primary_agent_uses_legal_persona(tmp_path, monkeypatch):
     result = await node(state)
 
     # The system prompt sent to the API must be the legal persona, not healthcare
-    calls = fake_ant.messages.calls
+    calls = fake_prov.calls
     assert calls, "No API call recorded"
     system_sent = calls[0]["system"]
     assert "legal" in system_sent.lower(), "Expected legal persona in system prompt"
     assert "clinical" not in system_sent.lower(), "Healthcare persona leaked into legal domain"
 
     # The user message should use the legal query label
-    user_msg = calls[0]["messages"][0]["content"]
+    user_msg = calls[0]["user"]
     assert user_msg.startswith("Legal question:")
 
     get_domain_profile.cache_clear()
@@ -167,23 +167,23 @@ async def test_primary_agent_uses_healthcare_persona():
     """Healthcare domain still sends the healthcare persona — regression guard."""
     get_domain_profile.cache_clear()
 
-    from tests.test_adapt_ai.conftest import FakeAnthropic, FakeMCPClient, make_state
+    from tests.test_adapt_ai.conftest import FakeProvider, FakeMCPClient, make_state
     from adapt_ai.agents.primary import make_primary_node
 
-    fake_ant = FakeAnthropic(text="ANSWER: A")
+    fake_prov = FakeProvider(text="ANSWER: A")
     mcp = FakeMCPClient()
-    node = make_primary_node(mcp, fake_ant)
+    node = make_primary_node(mcp, fake_prov)
 
     state = make_state(query="What is first-line for hypertension?", domain="healthcare")
     await node(state)
 
-    system_sent = fake_ant.messages.calls[0]["system"]
+    system_sent = fake_prov.calls[0]["system"]
     assert "clinical diagnostic assistant" in system_sent
-    assert user_msg_starts_with(fake_ant, "Clinical question:")
+    assert user_msg_starts_with(fake_prov, "Clinical question:")
 
 
-def user_msg_starts_with(fake_ant, prefix: str) -> bool:
-    return fake_ant.messages.calls[0]["messages"][0]["content"].startswith(prefix)
+def user_msg_starts_with(fake_prov, prefix: str) -> bool:
+    return fake_prov.calls[0]["user"].startswith(prefix)
 
 
 # ── 4. Disclaimer threading ───────────────────────────────────────────────────

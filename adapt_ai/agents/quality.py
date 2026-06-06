@@ -6,12 +6,11 @@ import re
 import time
 from typing import TYPE_CHECKING
 
-from anthropic import Anthropic
-
 from adapt_ai.agents.state import AgentState
 from adapt_ai.config import settings
 from adapt_ai.domain.lexicon import check_lexicon
 from adapt_ai.domain.profiles import get_domain_profile
+from adapt_ai.llmops.providers import LLMProvider
 from adapt_ai.llmops.usage import record_llm_call
 
 if TYPE_CHECKING:
@@ -20,8 +19,7 @@ if TYPE_CHECKING:
 logger = logging.getLogger(__name__)
 
 
-def make_quality_node(mcp_client: "MCPClient", anthropic_client: Anthropic):
-    """Return a LangGraph node function for the Quality Agent."""
+def make_quality_node(mcp_client: "MCPClient", provider: LLMProvider):
 
     async def quality_agent(state: AgentState) -> dict:
         query = state["query"]
@@ -54,22 +52,21 @@ def make_quality_node(mcp_client: "MCPClient", anthropic_client: Anthropic):
 
         try:
             t0 = time.perf_counter()
-            resp = anthropic_client.messages.create(
-                model=settings.model_name,
-                max_tokens=512,
-                temperature=0.0,
+            result = provider.complete(
                 system=profile.personas["quality"],
-                messages=[{"role": "user", "content": evaluation_prompt}],
+                user=evaluation_prompt,
+                max_tokens=512,
+                temperature=0.1,
             )
             record_llm_call(
                 agent="quality",
-                model=settings.model_name,
-                input_tokens=resp.usage.input_tokens,
-                output_tokens=resp.usage.output_tokens,
+                model=result.model,
+                input_tokens=result.input_tokens,
+                output_tokens=result.output_tokens,
                 latency_s=time.perf_counter() - t0,
                 run_id=state["session_id"],
             )
-            raw = resp.content[0].text.strip()
+            raw = result.text.strip()
             m = re.search(r"\{.*\}", raw, re.DOTALL)
             if m:
                 result = json.loads(m.group(0))

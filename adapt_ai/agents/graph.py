@@ -9,7 +9,6 @@ from __future__ import annotations
 import logging
 from typing import Literal
 
-from anthropic import Anthropic
 from langgraph.graph import StateGraph, END
 from langgraph.checkpoint.memory import MemorySaver
 
@@ -17,8 +16,8 @@ from adapt_ai.agents.state import AgentState
 from adapt_ai.agents.primary import make_primary_node
 from adapt_ai.agents.compliance import make_compliance_node
 from adapt_ai.agents.quality import make_quality_node
-from adapt_ai.config import settings
 from adapt_ai.domain.profiles import get_domain_profile
+from adapt_ai.llmops.providers import LLMProvider
 from adapt_ai.llmops.usage import new_accumulator, get_accumulator
 from adapt_ai.orchestrator.client import MCPClient
 from adapt_ai.orchestrator.router import should_use_rat
@@ -30,7 +29,7 @@ logger = logging.getLogger(__name__)
 
 def make_retrieval_node(mcp_client: MCPClient):
     async def intent_and_retrieve(state: AgentState) -> dict:
-        new_accumulator(state["session_id"])  # fresh tracker keyed by session
+        new_accumulator(state["session_id"])
         query = state["query"]
         domain = state.get("domain", "healthcare")
         use_rat = should_use_rat(query, domain)
@@ -74,21 +73,18 @@ async def aggregate_response(state: AgentState) -> dict:
 
     parts = [primary]
 
-    # Compliance warnings
     if compliance.get("status") == "warning" and compliance.get("issues"):
         warnings = "\n".join(
             f"- {i.get('description', i)}" for i in compliance["issues"]
         )
         parts.append(f"\n**Compliance Considerations:**\n{warnings}")
 
-    # Quality warnings
     if quality.get("score", 1.0) < 0.7:
         parts.append(
             f"\n**Note:** Response flagged for quality review "
             f"(confidence: {quality.get('score', 0):.0%})"
         )
 
-    # Disclaimer from domain profile
     profile = get_domain_profile(state.get("domain"))
     if profile.disclaimer:
         parts.append(f"\n---\n{profile.disclaimer}")
@@ -99,10 +95,6 @@ async def aggregate_response(state: AgentState) -> dict:
 # ── Node: fan-in join after parallel compliance + quality ──────────────────────
 
 async def review_results(state: AgentState) -> dict:
-    """Synchronisation point — waits for both compliance_agent and quality_agent.
-
-    No state changes here; routing is handled by route_after_review below.
-    """
     return {}
 
 
@@ -126,30 +118,32 @@ def route_after_review(
 
 # ── Graph construction ────────────────────────────────────────────────────────
 
-def build_graph(mcp_client: MCPClient, include_quality: bool = True) -> "CompiledGraph":
-    anthropic_client = Anthropic(
-        api_key=settings.anthropic_api_key.get_secret_value()
-    )
+def build_graph(
+    mcp_client: MCPClient,
+    include_quality: bool = True,
+    provider: LLMProvider | None = None,
+) -> "CompiledGraph":
+    if provider is None:
+        from adapt_ai.llmops.providers import get_provider
+        provider = get_provider()
 
     graph = StateGraph(AgentState)
 
     graph.add_node("intent_and_retrieve", make_retrieval_node(mcp_client))
-    graph.add_node("primary_agent", make_primary_node(mcp_client, anthropic_client))
+    graph.add_node("primary_agent", make_primary_node(mcp_client, provider))
     graph.add_node("compliance_agent", make_compliance_node(mcp_client))
     if include_quality:
-        graph.add_node("quality_agent", make_quality_node(mcp_client, anthropic_client))
+        graph.add_node("quality_agent", make_quality_node(mcp_client, provider))
     graph.add_node("review_results", review_results)
     graph.add_node("aggregate_response", aggregate_response)
 
     graph.set_entry_point("intent_and_retrieve")
     graph.add_edge("intent_and_retrieve", "primary_agent")
 
-    # Fan-out: compliance (and quality, if enabled) run after primary_agent
     graph.add_edge("primary_agent", "compliance_agent")
     if include_quality:
         graph.add_edge("primary_agent", "quality_agent")
 
-    # Fan-in into review_results
     graph.add_edge("compliance_agent", "review_results")
     if include_quality:
         graph.add_edge("quality_agent", "review_results")

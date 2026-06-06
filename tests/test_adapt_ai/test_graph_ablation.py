@@ -1,22 +1,18 @@
 """Ablation switch: build_graph(include_quality=False) must run the pipeline
 without the quality agent (no quality status, no quality-driven retry)."""
-from unittest.mock import patch
-
 import pytest
 
-from tests.test_adapt_ai.conftest import FakeAnthropic, FakeMCPClient, make_state
+from adapt_ai.agents.graph import build_graph
+from tests.test_adapt_ai.conftest import FakeProvider, FakeMCPClient, make_state
 
 
 async def _run(include_quality: bool) -> dict:
-    # Patch the Anthropic class constructed inside build_graph.
-    with patch("adapt_ai.agents.graph.Anthropic", FakeAnthropic):
-        from adapt_ai.agents.graph import build_graph
-        mcp = FakeMCPClient(context="ctx")
-        pipeline = build_graph(mcp, include_quality=include_quality)
-        return await pipeline.ainvoke(
-            make_state(session_id="ablation-test"),
-            config={"configurable": {"thread_id": "ablation-test"}},
-        )
+    mcp = FakeMCPClient(context="ctx")
+    pipeline = build_graph(mcp, include_quality=include_quality, provider=FakeProvider())
+    return await pipeline.ainvoke(
+        make_state(session_id="ablation-test"),
+        config={"configurable": {"thread_id": "ablation-test"}},
+    )
 
 
 @pytest.mark.asyncio
