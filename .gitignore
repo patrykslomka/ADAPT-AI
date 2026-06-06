@@ -33,6 +33,15 @@ data/
 chroma_db/
 sessions/
 
+# Keep the frozen evaluation artifacts and regulation corpus under version control
+!data/evaluation/
+data/evaluation/*
+!data/evaluation/*_reasoning_benchmark.json
+!data/evaluation/*_report.json
+!data/evaluation/*_summary.md
+!data/regulations_corpus/
+!data/regulations_corpus/**
+
 # Logs
 logs/
 *.log
