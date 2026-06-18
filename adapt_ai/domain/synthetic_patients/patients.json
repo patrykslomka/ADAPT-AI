@@ -1,0 +1,1659 @@
+{
+  "version": "1.0",
+  "generated_at": "2026-06-01T22:30:16.548428",
+  "total_patients": 20,
+  "patients": [
+    {
+      "demographics": {
+        "patient_id": "P-0001",
+        "name": "Alexander Hill",
+        "age": 26,
+        "gender": "Male",
+        "date_of_birth": "2000-06-07",
+        "mrn": "MRN-877572"
+      },
+      "medical_history": {
+        "chronic_conditions": [
+          "COPD",
+          "Obesity"
+        ],
+        "allergies": [],
+        "surgical_history": [],
+        "family_history": [
+          "Mother: Type 2 Diabetes",
+          "Sister: Hypertension",
+          "Father: Colon cancer"
+        ]
+      },
+      "current_medications": [],
+      "social_history": {
+        "smoking": "Never smoker",
+        "alcohol": "None",
+        "drugs": "Denies illicit drug use",
+        "occupation": "Office worker",
+        "living_situation": "Lives with spouse"
+      },
+      "presenting_complaint": {
+        "chief_complaint": "Burning with urination",
+        "hpi": "Female patient reports 3 days of dysuria, urinary frequency, and suprapubic discomfort. No fever, flank pain, or vaginal discharge. Sexually active with new partner.",
+        "symptoms": [
+          "dysuria",
+          "urinary_frequency"
+        ],
+        "duration": "weeks",
+        "onset": "sudden",
+        "severity": "severe"
+      },
+      "vital_signs": {
+        "temperature": 97.8,
+        "heart_rate": 80,
+        "blood_pressure_systolic": 132,
+        "blood_pressure_diastolic": 87,
+        "respiratory_rate": 15,
+        "oxygen_saturation": 96,
+        "recorded_at": "2026-06-01T22:30:16.544231"
+      },
+      "recent_labs": {
+        "recorded_at": "2026-06-01T07:30:16.544240",
+        "creatinine": 1.0,
+        "bun": 10,
+        "wbc": 9.4,
+        "hemoglobin": 12.6,
+        "platelets": 258
+      },
+      "risk_factors": [
+        "female",
+        "sexually_active"
+      ],
+      "suspected_condition": "urinary_tract_infection",
+      "created_at": "2026-06-01T22:30:16.544259"
+    },
+    {
+      "demographics": {
+        "patient_id": "P-0002",
+        "name": "Nancy Rhodes",
+        "age": 42,
+        "gender": "Female",
+        "date_of_birth": "1984-06-11",
+        "mrn": "MRN-263032"
+      },
+      "medical_history": {
+        "chronic_conditions": [
+          "Hypothyroidism",
+          "Heart Failure"
+        ],
+        "allergies": [],
+        "surgical_history": [
+          "Hysterectomy (2016)"
+        ],
+        "family_history": [
+          "Sister: Hypertension",
+          "Paternal grandfather: Stroke"
+        ]
+      },
+      "current_medications": [
+        {
+          "name": "Levothyroxine",
+          "dose": "50mcg",
+          "frequency": "daily",
+          "indication": "Hypothyroidism"
+        }
+      ],
+      "social_history": {
+        "smoking": "Current smoker (half pack/day)",
+        "alcohol": "None",
+        "drugs": "History of marijuana use",
+        "occupation": "Retired",
+        "living_situation": "Homeless"
+      },
+      "presenting_complaint": {
+        "chief_complaint": "Sudden weakness and speech difficulty",
+        "hpi": "68-year-old brought by family with sudden onset right-sided weakness and slurred speech, noticed 90 minutes ago. Patient has history of atrial fibrillation, not compliant with anticoagulation.",
+        "symptoms": [
+          "arm_weakness",
+          "speech_difficulty",
+          "facial_droop"
+        ],
+        "duration": "weeks",
+        "onset": "gradual",
+        "severity": "severe"
+      },
+      "vital_signs": {
+        "temperature": 97.8,
+        "heart_rate": 62,
+        "blood_pressure_systolic": 165,
+        "blood_pressure_diastolic": 77,
+        "respiratory_rate": 18,
+        "oxygen_saturation": 97,
+        "recorded_at": "2026-06-01T22:30:16.544513"
+      },
+      "recent_labs": {
+        "recorded_at": "2026-06-01T14:30:16.544519",
+        "creatinine": 1.1,
+        "bun": 16,
+        "wbc": 6.3,
+        "hemoglobin": 14.5,
+        "platelets": 243
+      },
+      "risk_factors": [
+        "atrial_fibrillation",
+        "hypertension"
+      ],
+      "suspected_condition": "stroke_ischemic",
+      "created_at": "2026-06-01T22:30:16.544531"
+    },
+    {
+      "demographics": {
+        "patient_id": "P-0003",
+        "name": "Brandon Henderson",
+        "age": 48,
+        "gender": "Male",
+        "date_of_birth": "1978-06-13",
+        "mrn": "MRN-472528"
+      },
+      "medical_history": {
+        "chronic_conditions": [
+          "Anxiety",
+          "Asthma"
+        ],
+        "allergies": [
+          {
+            "substance": "Sulfa",
+            "reaction": "anaphylaxis",
+            "severity": "severe"
+          }
+        ],
+        "surgical_history": [
+          "Cesarean section (2012)",
+          "Colonoscopy with polypectomy (2021)"
+        ],
+        "family_history": [
+          "Father: Colon cancer",
+          "Mother: Type 2 Diabetes",
+          "No significant family history"
+        ]
+      },
+      "current_medications": [
+        {
+          "name": "Albuterol inhaler",
+          "dose": "2 puffs",
+          "frequency": "PRN",
+          "indication": "Asthma"
+        }
+      ],
+      "social_history": {
+        "smoking": "Current smoker (1 pack/day)",
+        "alcohol": "Social (1-2 drinks/week)",
+        "drugs": "Remote history of IV drug use (20 years ago)",
+        "occupation": "Healthcare worker",
+        "living_situation": "Lives alone"
+      },
+      "presenting_complaint": {
+        "chief_complaint": "Nausea, vomiting, and confusion",
+        "hpi": "Type 1 diabetic presents with 2 days of nausea, vomiting, abdominal pain, and increasing confusion. Admits to missing insulin doses due to running out of supplies. Last glucose reading at home was 'HIGH'.",
+        "symptoms": [
+          "nausea",
+          "vomiting",
+          "abdominal_pain",
+          "altered_mental_status"
+        ],
+        "duration": "hours",
+        "onset": "gradual",
+        "severity": "moderate"
+      },
+      "vital_signs": {
+        "temperature": 97.9,
+        "heart_rate": 120,
+        "blood_pressure_systolic": 139,
+        "blood_pressure_diastolic": 88,
+        "respiratory_rate": 25,
+        "oxygen_saturation": 97,
+        "recorded_at": "2026-06-01T22:30:16.544749"
+      },
+      "recent_labs": {
+        "recorded_at": "2026-06-01T06:30:16.544753",
+        "glucose": 351,
+        "hba1c": 9.7,
+        "creatinine": 1.1,
+        "bun": 12,
+        "wbc": 6.2,
+        "hemoglobin": 13.0,
+        "platelets": 293
+      },
+      "risk_factors": [
+        "type_1_diabetes",
+        "insulin_noncompliance"
+      ],
+      "suspected_condition": "diabetic_ketoacidosis",
+      "created_at": "2026-06-01T22:30:16.544767"
+    },
+    {
+      "demographics": {
+        "patient_id": "P-0004",
+        "name": "Colleen Wagner",
+        "age": 72,
+        "gender": "Female",
+        "date_of_birth": "1954-06-19",
+        "mrn": "MRN-712982"
+      },
+      "medical_history": {
+        "chronic_conditions": [
+          "Depression",
+          "Atrial Fibrillation",
+          "Heart Failure",
+          "COPD",
+          "Hyperlipidemia"
+        ],
+        "allergies": [
+          {
+            "substance": "Sulfa",
+            "reaction": "anaphylaxis",
+            "severity": "severe"
+          }
+        ],
+        "surgical_history": [
+          "Cholecystectomy (2015)",
+          "Cesarean section (2012)"
+        ],
+        "family_history": [
+          "Mother: Breast cancer",
+          "Paternal grandfather: Stroke",
+          "Brother: CAD"
+        ]
+      },
+      "current_medications": [
+        {
+          "name": "Sertraline",
+          "dose": "50mg",
+          "frequency": "daily",
+          "indication": "Depression"
+        },
+        {
+          "name": "Warfarin",
+          "dose": "5mg",
+          "frequency": "daily",
+          "indication": "Atrial Fibrillation"
+        },
+        {
+          "name": "Atorvastatin",
+          "dose": "20mg",
+          "frequency": "daily",
+          "indication": "Hyperlipidemia"
+        }
+      ],
+      "social_history": {
+        "smoking": "Current smoker (half pack/day)",
+        "alcohol": "Heavy (>2 drinks/day)",
+        "drugs": "Remote history of IV drug use (20 years ago)",
+        "occupation": "Healthcare worker",
+        "living_situation": "Homeless"
+      },
+      "presenting_complaint": {
+        "chief_complaint": "Persistent cough and night sweats",
+        "hpi": "Patient reports 3 weeks of productive cough with occasional blood-tinged sputum, drenching night sweats, and unintentional weight loss of 10 pounds. Recent travel to Southeast Asia 2 months ago.",
+        "symptoms": [
+          "chronic_cough",
+          "hemoptysis",
+          "night_sweats",
+          "weight_loss",
+          "fever"
+        ],
+        "duration": "weeks",
+        "onset": "sudden",
+        "severity": "severe"
+      },
+      "vital_signs": {
+        "temperature": 100.2,
+        "heart_rate": 84,
+        "blood_pressure_systolic": 118,
+        "blood_pressure_diastolic": 90,
+        "respiratory_rate": 14,
+        "oxygen_saturation": 95,
+        "recorded_at": "2026-06-01T22:30:16.544966"
+      },
+      "recent_labs": {
+        "recorded_at": "2026-06-01T16:30:16.544971",
+        "creatinine": 1.0,
+        "bun": 14,
+        "wbc": 18.1,
+        "hemoglobin": 14.0,
+        "platelets": 177
+      },
+      "risk_factors": [
+        "endemic_travel"
+      ],
+      "suspected_condition": "tuberculosis",
+      "created_at": "2026-06-01T22:30:16.544984"
+    },
+    {
+      "demographics": {
+        "patient_id": "P-0005",
+        "name": "Christina Santos",
+        "age": 78,
+        "gender": "Female",
+        "date_of_birth": "1948-06-20",
+        "mrn": "MRN-769987"
+      },
+      "medical_history": {
+        "chronic_conditions": [
+          "Hyperlipidemia",
+          "Heart Failure",
+          "Obesity"
+        ],
+        "allergies": [
+          {
+            "substance": "Shellfish",
+            "reaction": "anaphylaxis",
+            "severity": "severe"
+          }
+        ],
+        "surgical_history": [
+          "Tonsillectomy (childhood)",
+          "Hysterectomy (2016)",
+          "Cataract surgery (2020)"
+        ],
+        "family_history": [
+          "Mother: Type 2 Diabetes"
+        ]
+      },
+      "current_medications": [
+        {
+          "name": "Atorvastatin",
+          "dose": "20mg",
+          "frequency": "daily",
+          "indication": "Hyperlipidemia"
+        }
+      ],
+      "social_history": {
+        "smoking": "Current smoker (1 pack/day)",
+        "alcohol": "Social (1-2 drinks/week)",
+        "drugs": "Denies illicit drug use",
+        "occupation": "Office worker",
+        "living_situation": "Homeless"
+      },
+      "presenting_complaint": {
+        "chief_complaint": "Sudden onset chest pain",
+        "hpi": "60-year-old presents with crushing substernal chest pain radiating to left arm, started 45 minutes ago. Associated with diaphoresis and shortness of breath. History of HTN and diabetes.",
+        "symptoms": [
+          "chest_pain",
+          "diaphoresis",
+          "dyspnea",
+          "radiation_to_arm"
+        ],
+        "duration": "hours",
+        "onset": "gradual",
+        "severity": "mild"
+      },
+      "vital_signs": {
+        "temperature": 98.9,
+        "heart_rate": 105,
+        "blood_pressure_systolic": 160,
+        "blood_pressure_diastolic": 74,
+        "respiratory_rate": 13,
+        "oxygen_saturation": 100,
+        "recorded_at": "2026-06-01T22:30:16.545173"
+      },
+      "recent_labs": {
+        "recorded_at": "2026-06-01T16:30:16.545178",
+        "creatinine": 0.9,
+        "bun": 19,
+        "wbc": 7.3,
+        "hemoglobin": 12.8,
+        "platelets": 288,
+        "troponin": 7.68
+      },
+      "risk_factors": [
+        "hypertension",
+        "diabetes"
+      ],
+      "suspected_condition": "myocardial_infarction_stemi",
+      "created_at": "2026-06-01T22:30:16.545190"
+    },
+    {
+      "demographics": {
+        "patient_id": "P-0006",
+        "name": "Daniel Lawrence",
+        "age": 70,
+        "gender": "Male",
+        "date_of_birth": "1956-06-18",
+        "mrn": "MRN-426858"
+      },
+      "medical_history": {
+        "chronic_conditions": [
+          "Anxiety",
+          "Obesity",
+          "Heart Failure",
+          "Chronic Kidney Disease",
+          "Osteoarthritis"
+        ],
+        "allergies": [
+          {
+            "substance": "Codeine",
+            "reaction": "nausea",
+            "severity": "mild"
+          }
+        ],
+        "surgical_history": [],
+        "family_history": [
+          "Father: MI at age 55",
+          "Sister: Hypertension"
+        ]
+      },
+      "current_medications": [],
+      "social_history": {
+        "smoking": "Former smoker (quit 5 years ago)",
+        "alcohol": "Social (1-2 drinks/week)",
+        "drugs": "Denies illicit drug use",
+        "occupation": "Retired",
+        "living_situation": "Lives alone"
+      },
+      "presenting_complaint": {
+        "chief_complaint": "Nausea, vomiting, and confusion",
+        "hpi": "Type 1 diabetic presents with 2 days of nausea, vomiting, abdominal pain, and increasing confusion. Admits to missing insulin doses due to running out of supplies. Last glucose reading at home was 'HIGH'.",
+        "symptoms": [
+          "nausea",
+          "vomiting",
+          "abdominal_pain",
+          "altered_mental_status"
+        ],
+        "duration": "hours",
+        "onset": "sudden",
+        "severity": "moderate"
+      },
+      "vital_signs": {
+        "temperature": 97.6,
+        "heart_rate": 123,
+        "blood_pressure_systolic": 118,
+        "blood_pressure_diastolic": 85,
+        "respiratory_rate": 24,
+        "oxygen_saturation": 99,
+        "recorded_at": "2026-06-01T22:30:16.545395"
+      },
+      "recent_labs": {
+        "recorded_at": "2026-06-01T03:30:16.545400",
+        "glucose": 397,
+        "hba1c": 8.4,
+        "creatinine": 2.7,
+        "bun": 50,
+        "wbc": 7.1,
+        "hemoglobin": 12.4,
+        "platelets": 318
+      },
+      "risk_factors": [
+        "type_1_diabetes",
+        "insulin_noncompliance"
+      ],
+      "suspected_condition": "diabetic_ketoacidosis",
+      "created_at": "2026-06-01T22:30:16.545416"
+    },
+    {
+      "demographics": {
+        "patient_id": "P-0007",
+        "name": "Abigail Shaffer",
+        "age": 47,
+        "gender": "Female",
+        "date_of_birth": "1979-06-13",
+        "mrn": "MRN-544154"
+      },
+      "medical_history": {
+        "chronic_conditions": [
+          "Chronic Kidney Disease",
+          "GERD",
+          "Hypertension",
+          "Anxiety"
+        ],
+        "allergies": [
+          {
+            "substance": "Sulfa",
+            "reaction": "anaphylaxis",
+            "severity": "severe"
+          }
+        ],
+        "surgical_history": [],
+        "family_history": [
+          "Brother: CAD",
+          "Paternal grandfather: Stroke",
+          "Father: MI at age 55"
+        ]
+      },
+      "current_medications": [
+        {
+          "name": "Omeprazole",
+          "dose": "20mg",
+          "frequency": "daily",
+          "indication": "GERD"
+        },
+        {
+          "name": "Lisinopril",
+          "dose": "10mg",
+          "frequency": "daily",
+          "indication": "Hypertension"
+        }
+      ],
+      "social_history": {
+        "smoking": "Former smoker (quit 5 years ago)",
+        "alcohol": "Heavy (>2 drinks/day)",
+        "drugs": "Denies illicit drug use",
+        "occupation": "Construction worker",
+        "living_situation": "Lives with spouse"
+      },
+      "presenting_complaint": {
+        "chief_complaint": "Sudden weakness and speech difficulty",
+        "hpi": "68-year-old brought by family with sudden onset right-sided weakness and slurred speech, noticed 90 minutes ago. Patient has history of atrial fibrillation, not compliant with anticoagulation.",
+        "symptoms": [
+          "arm_weakness",
+          "speech_difficulty",
+          "facial_droop"
+        ],
+        "duration": "days",
+        "onset": "sudden",
+        "severity": "mild"
+      },
+      "vital_signs": {
+        "temperature": 98.1,
+        "heart_rate": 87,
+        "blood_pressure_systolic": 194,
+        "blood_pressure_diastolic": 87,
+        "respiratory_rate": 12,
+        "oxygen_saturation": 95,
+        "recorded_at": "2026-06-01T22:30:16.545609"
+      },
+      "recent_labs": {
+        "recorded_at": "2026-06-01T21:30:16.545613",
+        "creatinine": 3.0,
+        "bun": 49,
+        "wbc": 10.0,
+        "hemoglobin": 12.7,
+        "platelets": 274
+      },
+      "risk_factors": [
+        "atrial_fibrillation",
+        "hypertension"
+      ],
+      "suspected_condition": "stroke_ischemic",
+      "created_at": "2026-06-01T22:30:16.545624"
+    },
+    {
+      "demographics": {
+        "patient_id": "P-0008",
+        "name": "Gina Moore",
+        "age": 38,
+        "gender": "Female",
+        "date_of_birth": "1988-06-10",
+        "mrn": "MRN-520521"
+      },
+      "medical_history": {
+        "chronic_conditions": [
+          "Hyperlipidemia"
+        ],
+        "allergies": [],
+        "surgical_history": [
+          "CABG x3 (2018)",
+          "Cataract surgery (2020)",
+          "Tonsillectomy (childhood)"
+        ],
+        "family_history": [
+          "No significant family history",
+          "Mother: Type 2 Diabetes"
+        ]
+      },
+      "current_medications": [
+        {
+          "name": "Atorvastatin",
+          "dose": "20mg",
+          "frequency": "daily",
+          "indication": "Hyperlipidemia"
+        }
+      ],
+      "social_history": {
+        "smoking": "Current smoker (1 pack/day)",
+        "alcohol": "Social (1-2 drinks/week)",
+        "drugs": "Denies illicit drug use",
+        "occupation": "Teacher",
+        "living_situation": "Homeless"
+      },
+      "presenting_complaint": {
+        "chief_complaint": "Persistent cough and night sweats",
+        "hpi": "Patient reports 3 weeks of productive cough with occasional blood-tinged sputum, drenching night sweats, and unintentional weight loss of 10 pounds. Recent travel to Southeast Asia 2 months ago.",
+        "symptoms": [
+          "chronic_cough",
+          "hemoptysis",
+          "night_sweats",
+          "weight_loss",
+          "fever"
+        ],
+        "duration": "weeks",
+        "onset": "gradual",
+        "severity": "mild"
+      },
+      "vital_signs": {
+        "temperature": 101.9,
+        "heart_rate": 75,
+        "blood_pressure_systolic": 126,
+        "blood_pressure_diastolic": 86,
+        "respiratory_rate": 13,
+        "oxygen_saturation": 95,
+        "recorded_at": "2026-06-01T22:30:16.545854"
+      },
+      "recent_labs": {
+        "recorded_at": "2026-06-01T19:30:16.545859",
+        "creatinine": 1.1,
+        "bun": 11,
+        "wbc": 17.4,
+        "hemoglobin": 12.9,
+        "platelets": 180
+      },
+      "risk_factors": [
+        "endemic_travel"
+      ],
+      "suspected_condition": "tuberculosis",
+      "created_at": "2026-06-01T22:30:16.545874"
+    },
+    {
+      "demographics": {
+        "patient_id": "P-0009",
+        "name": "George Davis",
+        "age": 62,
+        "gender": "Male",
+        "date_of_birth": "1964-06-16",
+        "mrn": "MRN-723398"
+      },
+      "medical_history": {
+        "chronic_conditions": [
+          "Depression",
+          "Type 2 Diabetes"
+        ],
+        "allergies": [
+          {
+            "substance": "Eggs",
+            "reaction": "hives",
+            "severity": "mild"
+          }
+        ],
+        "surgical_history": [
+          "Hysterectomy (2016)"
+        ],
+        "family_history": [
+          "Father: Colon cancer",
+          "Brother: CAD"
+        ]
+      },
+      "current_medications": [
+        {
+          "name": "Sertraline",
+          "dose": "50mg",
+          "frequency": "daily",
+          "indication": "Depression"
+        }
+      ],
+      "social_history": {
+        "smoking": "Former smoker (quit 5 years ago)",
+        "alcohol": "Moderate (1 drink/day)",
+        "drugs": "History of marijuana use",
+        "occupation": "Office worker",
+        "living_situation": "Lives with family"
+      },
+      "presenting_complaint": {
+        "chief_complaint": "Leg swelling and shortness of breath",
+        "hpi": "Patient with recent 6-hour flight presents with unilateral left leg swelling for 3 days and new onset shortness of breath today. Denies chest pain. Taking oral contraceptives.",
+        "symptoms": [
+          "leg_swelling",
+          "dyspnea"
+        ],
+        "duration": "days",
+        "onset": "sudden",
+        "severity": "mild"
+      },
+      "vital_signs": {
+        "temperature": 98.1,
+        "heart_rate": 78,
+        "blood_pressure_systolic": 113,
+        "blood_pressure_diastolic": 72,
+        "respiratory_rate": 16,
+        "oxygen_saturation": 96,
+        "recorded_at": "2026-06-01T22:30:16.546063"
+      },
+      "recent_labs": {
+        "recorded_at": "2026-06-01T05:30:16.546066",
+        "glucose": 133,
+        "hba1c": 7.4,
+        "creatinine": 0.9,
+        "bun": 11,
+        "wbc": 10.2,
+        "hemoglobin": 13.5,
+        "platelets": 190
+      },
+      "risk_factors": [
+        "recent_travel",
+        "oral_contraceptives"
+      ],
+      "suspected_condition": "dvt_pe_rule_out",
+      "created_at": "2026-06-01T22:30:16.546079"
+    },
+    {
+      "demographics": {
+        "patient_id": "P-0010",
+        "name": "Sarah Munoz",
+        "age": 78,
+        "gender": "Female",
+        "date_of_birth": "1948-06-20",
+        "mrn": "MRN-669605"
+      },
+      "medical_history": {
+        "chronic_conditions": [
+          "Depression",
+          "Hypothyroidism",
+          "Anxiety",
+          "Osteoarthritis"
+        ],
+        "allergies": [],
+        "surgical_history": [
+          "CABG x3 (2018)",
+          "Cholecystectomy (2015)"
+        ],
+        "family_history": [
+          "Sister: Hypertension"
+        ]
+      },
+      "current_medications": [
+        {
+          "name": "Sertraline",
+          "dose": "50mg",
+          "frequency": "daily",
+          "indication": "Depression"
+        },
+        {
+          "name": "Levothyroxine",
+          "dose": "50mcg",
+          "frequency": "daily",
+          "indication": "Hypothyroidism"
+        }
+      ],
+      "social_history": {
+        "smoking": "Former smoker (quit 5 years ago)",
+        "alcohol": "Moderate (1 drink/day)",
+        "drugs": "History of marijuana use",
+        "occupation": "Teacher",
+        "living_situation": "Lives with spouse"
+      },
+      "presenting_complaint": {
+        "chief_complaint": "Fatigue and weight loss",
+        "hpi": "Patient reports 2 months of progressive fatigue, unintentional 15-pound weight loss, and intermittent low-grade fevers. No cough or respiratory symptoms. Has noticed enlarged lymph nodes in neck.",
+        "symptoms": [
+          "fatigue",
+          "weight_loss",
+          "fever"
+        ],
+        "duration": "hours",
+        "onset": "gradual",
+        "severity": "severe"
+      },
+      "vital_signs": {
+        "temperature": 98.2,
+        "heart_rate": 88,
+        "blood_pressure_systolic": 139,
+        "blood_pressure_diastolic": 71,
+        "respiratory_rate": 12,
+        "oxygen_saturation": 100,
+        "recorded_at": "2026-06-01T22:30:16.546271"
+      },
+      "recent_labs": {
+        "recorded_at": "2026-06-01T08:30:16.546274",
+        "creatinine": 1.1,
+        "bun": 10,
+        "wbc": 4.5,
+        "hemoglobin": 15.1,
+        "platelets": 313
+      },
+      "risk_factors": [],
+      "suspected_condition": "malignancy_workup",
+      "created_at": "2026-06-01T22:30:16.546289"
+    },
+    {
+      "demographics": {
+        "patient_id": "P-0011",
+        "name": "Monica Herrera",
+        "age": 35,
+        "gender": "Female",
+        "date_of_birth": "1991-06-10",
+        "mrn": "MRN-877236"
+      },
+      "medical_history": {
+        "chronic_conditions": [
+          "Osteoarthritis",
+          "GERD",
+          "Atrial Fibrillation",
+          "Obesity"
+        ],
+        "allergies": [],
+        "surgical_history": [],
+        "family_history": [
+          "Mother: Breast cancer",
+          "Sister: Hypertension",
+          "Father: MI at age 55"
+        ]
+      },
+      "current_medications": [
+        {
+          "name": "Omeprazole",
+          "dose": "20mg",
+          "frequency": "daily",
+          "indication": "GERD"
+        },
+        {
+          "name": "Warfarin",
+          "dose": "5mg",
+          "frequency": "daily",
+          "indication": "Atrial Fibrillation"
+        }
+      ],
+      "social_history": {
+        "smoking": "Current smoker (half pack/day)",
+        "alcohol": "Social (1-2 drinks/week)",
+        "drugs": "Denies illicit drug use",
+        "occupation": "Healthcare worker",
+        "living_situation": "Lives with family"
+      },
+      "presenting_complaint": {
+        "chief_complaint": "Persistent cough and night sweats",
+        "hpi": "Patient reports 3 weeks of productive cough with occasional blood-tinged sputum, drenching night sweats, and unintentional weight loss of 10 pounds. Recent travel to Southeast Asia 2 months ago.",
+        "symptoms": [
+          "chronic_cough",
+          "hemoptysis",
+          "night_sweats",
+          "weight_loss",
+          "fever"
+        ],
+        "duration": "days",
+        "onset": "sudden",
+        "severity": "severe"
+      },
+      "vital_signs": {
+        "temperature": 101.9,
+        "heart_rate": 63,
+        "blood_pressure_systolic": 121,
+        "blood_pressure_diastolic": 87,
+        "respiratory_rate": 18,
+        "oxygen_saturation": 98,
+        "recorded_at": "2026-06-01T22:30:16.546481"
+      },
+      "recent_labs": {
+        "recorded_at": "2026-05-31T22:30:16.546486",
+        "creatinine": 0.9,
+        "bun": 13,
+        "wbc": 19.8,
+        "hemoglobin": 15.2,
+        "platelets": 255
+      },
+      "risk_factors": [
+        "endemic_travel"
+      ],
+      "suspected_condition": "tuberculosis",
+      "created_at": "2026-06-01T22:30:16.546498"
+    },
+    {
+      "demographics": {
+        "patient_id": "P-0012",
+        "name": "Mr. Juan Calderon",
+        "age": 36,
+        "gender": "Male",
+        "date_of_birth": "1990-06-10",
+        "mrn": "MRN-872343"
+      },
+      "medical_history": {
+        "chronic_conditions": [
+          "Hypothyroidism",
+          "Atrial Fibrillation",
+          "Anxiety"
+        ],
+        "allergies": [
+          {
+            "substance": "Codeine",
+            "reaction": "nausea",
+            "severity": "mild"
+          },
+          {
+            "substance": "Latex",
+            "reaction": "hives",
+            "severity": "moderate"
+          }
+        ],
+        "surgical_history": [],
+        "family_history": [
+          "Mother: Type 2 Diabetes",
+          "Father: Colon cancer",
+          "Father: MI at age 55"
+        ]
+      },
+      "current_medications": [
+        {
+          "name": "Levothyroxine",
+          "dose": "50mcg",
+          "frequency": "daily",
+          "indication": "Hypothyroidism"
+        },
+        {
+          "name": "Warfarin",
+          "dose": "5mg",
+          "frequency": "daily",
+          "indication": "Atrial Fibrillation"
+        }
+      ],
+      "social_history": {
+        "smoking": "Former smoker (quit 5 years ago)",
+        "alcohol": "Heavy (>2 drinks/day)",
+        "drugs": "History of marijuana use",
+        "occupation": "Healthcare worker",
+        "living_situation": "Lives with spouse"
+      },
+      "presenting_complaint": {
+        "chief_complaint": "Nausea, vomiting, and confusion",
+        "hpi": "Type 1 diabetic presents with 2 days of nausea, vomiting, abdominal pain, and increasing confusion. Admits to missing insulin doses due to running out of supplies. Last glucose reading at home was 'HIGH'.",
+        "symptoms": [
+          "nausea",
+          "vomiting",
+          "abdominal_pain",
+          "altered_mental_status"
+        ],
+        "duration": "hours",
+        "onset": "sudden",
+        "severity": "moderate"
+      },
+      "vital_signs": {
+        "temperature": 98.0,
+        "heart_rate": 112,
+        "blood_pressure_systolic": 112,
+        "blood_pressure_diastolic": 78,
+        "respiratory_rate": 30,
+        "oxygen_saturation": 100,
+        "recorded_at": "2026-06-01T22:30:16.546844"
+      },
+      "recent_labs": {
+        "recorded_at": "2026-06-01T00:30:16.546849",
+        "glucose": 465,
+        "hba1c": 8.6,
+        "creatinine": 1.2,
+        "bun": 11,
+        "wbc": 10.2,
+        "hemoglobin": 13.0,
+        "platelets": 298
+      },
+      "risk_factors": [
+        "type_1_diabetes",
+        "insulin_noncompliance"
+      ],
+      "suspected_condition": "diabetic_ketoacidosis",
+      "created_at": "2026-06-01T22:30:16.546861"
+    },
+    {
+      "demographics": {
+        "patient_id": "P-0013",
+        "name": "Shannon Ray",
+        "age": 27,
+        "gender": "Female",
+        "date_of_birth": "1999-06-08",
+        "mrn": "MRN-213668"
+      },
+      "medical_history": {
+        "chronic_conditions": [
+          "Heart Failure",
+          "GERD",
+          "Obesity"
+        ],
+        "allergies": [
+          {
+            "substance": "Shellfish",
+            "reaction": "anaphylaxis",
+            "severity": "severe"
+          }
+        ],
+        "surgical_history": [],
+        "family_history": [
+          "Father: Colon cancer",
+          "Mother: Breast cancer",
+          "Father: MI at age 55"
+        ]
+      },
+      "current_medications": [
+        {
+          "name": "Omeprazole",
+          "dose": "20mg",
+          "frequency": "daily",
+          "indication": "GERD"
+        }
+      ],
+      "social_history": {
+        "smoking": "Never smoker",
+        "alcohol": "Social (1-2 drinks/week)",
+        "drugs": "History of marijuana use",
+        "occupation": "Construction worker",
+        "living_situation": "Lives alone"
+      },
+      "presenting_complaint": {
+        "chief_complaint": "Fatigue and weight loss",
+        "hpi": "Patient reports 2 months of progressive fatigue, unintentional 15-pound weight loss, and intermittent low-grade fevers. No cough or respiratory symptoms. Has noticed enlarged lymph nodes in neck.",
+        "symptoms": [
+          "fatigue",
+          "weight_loss",
+          "fever"
+        ],
+        "duration": "weeks",
+        "onset": "gradual",
+        "severity": "severe"
+      },
+      "vital_signs": {
+        "temperature": 98.7,
+        "heart_rate": 83,
+        "blood_pressure_systolic": 138,
+        "blood_pressure_diastolic": 79,
+        "respiratory_rate": 16,
+        "oxygen_saturation": 97,
+        "recorded_at": "2026-06-01T22:30:16.547048"
+      },
+      "recent_labs": {
+        "recorded_at": "2026-06-01T00:30:16.547051",
+        "creatinine": 1.0,
+        "bun": 16,
+        "wbc": 9.0,
+        "hemoglobin": 14.2,
+        "platelets": 199
+      },
+      "risk_factors": [],
+      "suspected_condition": "malignancy_workup",
+      "created_at": "2026-06-01T22:30:16.547061"
+    },
+    {
+      "demographics": {
+        "patient_id": "P-0014",
+        "name": "Amber Perez",
+        "age": 67,
+        "gender": "Female",
+        "date_of_birth": "1959-06-18",
+        "mrn": "MRN-497562"
+      },
+      "medical_history": {
+        "chronic_conditions": [
+          "Depression",
+          "Obesity",
+          "Asthma"
+        ],
+        "allergies": [
+          {
+            "substance": "Penicillin",
+            "reaction": "rash",
+            "severity": "moderate"
+          }
+        ],
+        "surgical_history": [
+          "Total knee replacement (2019)"
+        ],
+        "family_history": [
+          "Brother: CAD",
+          "Father: Colon cancer"
+        ]
+      },
+      "current_medications": [
+        {
+          "name": "Sertraline",
+          "dose": "50mg",
+          "frequency": "daily",
+          "indication": "Depression"
+        },
+        {
+          "name": "Albuterol inhaler",
+          "dose": "2 puffs",
+          "frequency": "PRN",
+          "indication": "Asthma"
+        }
+      ],
+      "social_history": {
+        "smoking": "Former smoker (quit 5 years ago)",
+        "alcohol": "Heavy (>2 drinks/day)",
+        "drugs": "Remote history of IV drug use (20 years ago)",
+        "occupation": "Office worker",
+        "living_situation": "Lives alone"
+      },
+      "presenting_complaint": {
+        "chief_complaint": "Sudden weakness and speech difficulty",
+        "hpi": "68-year-old brought by family with sudden onset right-sided weakness and slurred speech, noticed 90 minutes ago. Patient has history of atrial fibrillation, not compliant with anticoagulation.",
+        "symptoms": [
+          "arm_weakness",
+          "speech_difficulty",
+          "facial_droop"
+        ],
+        "duration": "weeks",
+        "onset": "gradual",
+        "severity": "mild"
+      },
+      "vital_signs": {
+        "temperature": 98.6,
+        "heart_rate": 84,
+        "blood_pressure_systolic": 169,
+        "blood_pressure_diastolic": 79,
+        "respiratory_rate": 13,
+        "oxygen_saturation": 96,
+        "recorded_at": "2026-06-01T22:30:16.547263"
+      },
+      "recent_labs": {
+        "recorded_at": "2026-06-01T21:30:16.547267",
+        "creatinine": 0.8,
+        "bun": 17,
+        "wbc": 8.5,
+        "hemoglobin": 15.1,
+        "platelets": 266
+      },
+      "risk_factors": [
+        "atrial_fibrillation",
+        "hypertension"
+      ],
+      "suspected_condition": "stroke_ischemic",
+      "created_at": "2026-06-01T22:30:16.547281"
+    },
+    {
+      "demographics": {
+        "patient_id": "P-0015",
+        "name": "Angela Hall",
+        "age": 81,
+        "gender": "Female",
+        "date_of_birth": "1945-06-21",
+        "mrn": "MRN-760356"
+      },
+      "medical_history": {
+        "chronic_conditions": [
+          "GERD",
+          "Obesity",
+          "Atrial Fibrillation"
+        ],
+        "allergies": [
+          {
+            "substance": "Codeine",
+            "reaction": "nausea",
+            "severity": "mild"
+          }
+        ],
+        "surgical_history": [],
+        "family_history": [
+          "Father: MI at age 55",
+          "Paternal grandfather: Stroke",
+          "No significant family history"
+        ]
+      },
+      "current_medications": [
+        {
+          "name": "Omeprazole",
+          "dose": "20mg",
+          "frequency": "daily",
+          "indication": "GERD"
+        },
+        {
+          "name": "Warfarin",
+          "dose": "5mg",
+          "frequency": "daily",
+          "indication": "Atrial Fibrillation"
+        }
+      ],
+      "social_history": {
+        "smoking": "Former smoker (quit 5 years ago)",
+        "alcohol": "Heavy (>2 drinks/day)",
+        "drugs": "Denies illicit drug use",
+        "occupation": "Teacher",
+        "living_situation": "Lives with spouse"
+      },
+      "presenting_complaint": {
+        "chief_complaint": "Sudden onset chest pain",
+        "hpi": "60-year-old presents with crushing substernal chest pain radiating to left arm, started 45 minutes ago. Associated with diaphoresis and shortness of breath. History of HTN and diabetes.",
+        "symptoms": [
+          "chest_pain",
+          "diaphoresis",
+          "dyspnea",
+          "radiation_to_arm"
+        ],
+        "duration": "days",
+        "onset": "sudden",
+        "severity": "moderate"
+      },
+      "vital_signs": {
+        "temperature": 98.4,
+        "heart_rate": 109,
+        "blood_pressure_systolic": 154,
+        "blood_pressure_diastolic": 80,
+        "respiratory_rate": 18,
+        "oxygen_saturation": 98,
+        "recorded_at": "2026-06-01T22:30:16.547456"
+      },
+      "recent_labs": {
+        "recorded_at": "2026-06-01T08:30:16.547461",
+        "creatinine": 1.1,
+        "bun": 18,
+        "wbc": 7.4,
+        "hemoglobin": 12.6,
+        "platelets": 271,
+        "troponin": 4.78
+      },
+      "risk_factors": [
+        "hypertension",
+        "diabetes"
+      ],
+      "suspected_condition": "myocardial_infarction_stemi",
+      "created_at": "2026-06-01T22:30:16.547473"
+    },
+    {
+      "demographics": {
+        "patient_id": "P-0016",
+        "name": "Donald Reid",
+        "age": 78,
+        "gender": "Male",
+        "date_of_birth": "1948-06-20",
+        "mrn": "MRN-768636"
+      },
+      "medical_history": {
+        "chronic_conditions": [
+          "Hypothyroidism",
+          "Obesity",
+          "Osteoarthritis",
+          "Chronic Kidney Disease"
+        ],
+        "allergies": [
+          {
+            "substance": "Latex",
+            "reaction": "hives",
+            "severity": "moderate"
+          }
+        ],
+        "surgical_history": [
+          "CABG x3 (2018)"
+        ],
+        "family_history": [
+          "Sister: Hypertension"
+        ]
+      },
+      "current_medications": [
+        {
+          "name": "Levothyroxine",
+          "dose": "50mcg",
+          "frequency": "daily",
+          "indication": "Hypothyroidism"
+        }
+      ],
+      "social_history": {
+        "smoking": "Current smoker (1 pack/day)",
+        "alcohol": "None",
+        "drugs": "Denies illicit drug use",
+        "occupation": "Office worker",
+        "living_situation": "Lives with spouse"
+      },
+      "presenting_complaint": {
+        "chief_complaint": "Severe headache and neck stiffness",
+        "hpi": "Young adult presents with worst headache of life, sudden onset 4 hours ago. Associated with neck stiffness, photophobia, and one episode of vomiting. No fever.",
+        "symptoms": [
+          "severe_headache",
+          "neck_stiffness"
+        ],
+        "duration": "weeks",
+        "onset": "sudden",
+        "severity": "severe"
+      },
+      "vital_signs": {
+        "temperature": 97.8,
+        "heart_rate": 73,
+        "blood_pressure_systolic": 123,
+        "blood_pressure_diastolic": 80,
+        "respiratory_rate": 16,
+        "oxygen_saturation": 98,
+        "recorded_at": "2026-06-01T22:30:16.547644"
+      },
+      "recent_labs": {
+        "recorded_at": "2026-06-01T08:30:16.547646",
+        "creatinine": 1.6,
+        "bun": 38,
+        "wbc": 7.0,
+        "hemoglobin": 15.1,
+        "platelets": 328
+      },
+      "risk_factors": [],
+      "suspected_condition": "subarachnoid_hemorrhage_rule_out",
+      "created_at": "2026-06-01T22:30:16.547657"
+    },
+    {
+      "demographics": {
+        "patient_id": "P-0017",
+        "name": "Jacob Clark",
+        "age": 79,
+        "gender": "Male",
+        "date_of_birth": "1947-06-21",
+        "mrn": "MRN-902784"
+      },
+      "medical_history": {
+        "chronic_conditions": [
+          "Chronic Kidney Disease",
+          "Hypertension",
+          "Heart Failure",
+          "Asthma",
+          "Atrial Fibrillation"
+        ],
+        "allergies": [
+          {
+            "substance": "NSAIDs",
+            "reaction": "bronchospasm",
+            "severity": "moderate"
+          },
+          {
+            "substance": "Shellfish",
+            "reaction": "anaphylaxis",
+            "severity": "severe"
+          }
+        ],
+        "surgical_history": [
+          "Colonoscopy with polypectomy (2021)",
+          "Total knee replacement (2019)"
+        ],
+        "family_history": [
+          "Father: Colon cancer",
+          "Mother: Breast cancer"
+        ]
+      },
+      "current_medications": [
+        {
+          "name": "Metoprolol",
+          "dose": "25mg",
+          "frequency": "BID",
+          "indication": "Hypertension"
+        },
+        {
+          "name": "Albuterol inhaler",
+          "dose": "2 puffs",
+          "frequency": "PRN",
+          "indication": "Asthma"
+        },
+        {
+          "name": "Warfarin",
+          "dose": "5mg",
+          "frequency": "daily",
+          "indication": "Atrial Fibrillation"
+        }
+      ],
+      "social_history": {
+        "smoking": "Current smoker (half pack/day)",
+        "alcohol": "Moderate (1 drink/day)",
+        "drugs": "Remote history of IV drug use (20 years ago)",
+        "occupation": "Unemployed",
+        "living_situation": "Assisted living facility"
+      },
+      "presenting_complaint": {
+        "chief_complaint": "Cough, fever, and shortness of breath",
+        "hpi": "Patient reports 5 days of productive cough with green sputum, fever up to 102\u00b0F, and progressive dyspnea. No recent hospitalizations. Lives independently.",
+        "symptoms": [
+          "cough",
+          "fever",
+          "dyspnea",
+          "sputum_production"
+        ],
+        "duration": "days",
+        "onset": "sudden",
+        "severity": "severe"
+      },
+      "vital_signs": {
+        "temperature": 100.1,
+        "heart_rate": 89,
+        "blood_pressure_systolic": 122,
+        "blood_pressure_diastolic": 88,
+        "respiratory_rate": 26,
+        "oxygen_saturation": 89,
+        "recorded_at": "2026-06-01T22:30:16.547836"
+      },
+      "recent_labs": {
+        "recorded_at": "2026-06-01T07:30:16.547841",
+        "creatinine": 1.8,
+        "bun": 33,
+        "wbc": 13.7,
+        "hemoglobin": 13.3,
+        "platelets": 344
+      },
+      "risk_factors": [
+        "age_over_65",
+        "chronic_lung_disease"
+      ],
+      "suspected_condition": "pneumonia_cap",
+      "created_at": "2026-06-01T22:30:16.547852"
+    },
+    {
+      "demographics": {
+        "patient_id": "P-0018",
+        "name": "Taylor Wong",
+        "age": 42,
+        "gender": "Female",
+        "date_of_birth": "1984-06-11",
+        "mrn": "MRN-888539"
+      },
+      "medical_history": {
+        "chronic_conditions": [
+          "Asthma",
+          "Type 2 Diabetes",
+          "Chronic Kidney Disease",
+          "Hypertension"
+        ],
+        "allergies": [
+          {
+            "substance": "Penicillin",
+            "reaction": "rash",
+            "severity": "moderate"
+          }
+        ],
+        "surgical_history": [
+          "Hysterectomy (2016)",
+          "Total knee replacement (2019)",
+          "Cholecystectomy (2015)"
+        ],
+        "family_history": [
+          "Father: MI at age 55",
+          "Paternal grandfather: Stroke",
+          "No significant family history"
+        ]
+      },
+      "current_medications": [
+        {
+          "name": "Albuterol inhaler",
+          "dose": "2 puffs",
+          "frequency": "PRN",
+          "indication": "Asthma"
+        },
+        {
+          "name": "Lisinopril",
+          "dose": "10mg",
+          "frequency": "daily",
+          "indication": "Hypertension"
+        }
+      ],
+      "social_history": {
+        "smoking": "Never smoker",
+        "alcohol": "Social (1-2 drinks/week)",
+        "drugs": "Denies illicit drug use",
+        "occupation": "Office worker",
+        "living_situation": "Assisted living facility"
+      },
+      "presenting_complaint": {
+        "chief_complaint": "Sudden onset chest pain",
+        "hpi": "60-year-old presents with crushing substernal chest pain radiating to left arm, started 45 minutes ago. Associated with diaphoresis and shortness of breath. History of HTN and diabetes.",
+        "symptoms": [
+          "chest_pain",
+          "diaphoresis",
+          "dyspnea",
+          "radiation_to_arm"
+        ],
+        "duration": "weeks",
+        "onset": "sudden",
+        "severity": "moderate"
+      },
+      "vital_signs": {
+        "temperature": 98.5,
+        "heart_rate": 120,
+        "blood_pressure_systolic": 104,
+        "blood_pressure_diastolic": 75,
+        "respiratory_rate": 16,
+        "oxygen_saturation": 99,
+        "recorded_at": "2026-06-01T22:30:16.548026"
+      },
+      "recent_labs": {
+        "recorded_at": "2026-06-01T16:30:16.548033",
+        "glucose": 139,
+        "hba1c": 7.3,
+        "creatinine": 1.5,
+        "bun": 34,
+        "wbc": 8.2,
+        "hemoglobin": 15.6,
+        "platelets": 246,
+        "troponin": 4.27
+      },
+      "risk_factors": [
+        "hypertension",
+        "diabetes"
+      ],
+      "suspected_condition": "myocardial_infarction_stemi",
+      "created_at": "2026-06-01T22:30:16.548045"
+    },
+    {
+      "demographics": {
+        "patient_id": "P-0019",
+        "name": "Christopher Daniel",
+        "age": 29,
+        "gender": "Male",
+        "date_of_birth": "1997-06-08",
+        "mrn": "MRN-720859"
+      },
+      "medical_history": {
+        "chronic_conditions": [
+          "Type 2 Diabetes"
+        ],
+        "allergies": [
+          {
+            "substance": "Latex",
+            "reaction": "hives",
+            "severity": "moderate"
+          }
+        ],
+        "surgical_history": [
+          "Tonsillectomy (childhood)",
+          "Cholecystectomy (2015)",
+          "Appendectomy (2010)"
+        ],
+        "family_history": [
+          "Paternal grandfather: Stroke",
+          "Brother: CAD"
+        ]
+      },
+      "current_medications": [],
+      "social_history": {
+        "smoking": "Current smoker (1 pack/day)",
+        "alcohol": "None",
+        "drugs": "Remote history of IV drug use (20 years ago)",
+        "occupation": "Unemployed",
+        "living_situation": "Lives with family"
+      },
+      "presenting_complaint": {
+        "chief_complaint": "Persistent cough and night sweats",
+        "hpi": "Patient reports 3 weeks of productive cough with occasional blood-tinged sputum, drenching night sweats, and unintentional weight loss of 10 pounds. Recent travel to Southeast Asia 2 months ago.",
+        "symptoms": [
+          "chronic_cough",
+          "hemoptysis",
+          "night_sweats",
+          "weight_loss",
+          "fever"
+        ],
+        "duration": "days",
+        "onset": "gradual",
+        "severity": "mild"
+      },
+      "vital_signs": {
+        "temperature": 100.6,
+        "heart_rate": 71,
+        "blood_pressure_systolic": 130,
+        "blood_pressure_diastolic": 84,
+        "respiratory_rate": 17,
+        "oxygen_saturation": 96,
+        "recorded_at": "2026-06-01T22:30:16.548212"
+      },
+      "recent_labs": {
+        "recorded_at": "2026-05-31T22:30:16.548215",
+        "glucose": 166,
+        "hba1c": 9.9,
+        "creatinine": 0.9,
+        "bun": 18,
+        "wbc": 15.7,
+        "hemoglobin": 15.3,
+        "platelets": 301
+      },
+      "risk_factors": [
+        "endemic_travel"
+      ],
+      "suspected_condition": "tuberculosis",
+      "created_at": "2026-06-01T22:30:16.548226"
+    },
+    {
+      "demographics": {
+        "patient_id": "P-0020",
+        "name": "Jamie Mayo",
+        "age": 45,
+        "gender": "Female",
+        "date_of_birth": "1981-06-12",
+        "mrn": "MRN-993085"
+      },
+      "medical_history": {
+        "chronic_conditions": [
+          "Obesity",
+          "Type 2 Diabetes"
+        ],
+        "allergies": [],
+        "surgical_history": [
+          "Cataract surgery (2020)"
+        ],
+        "family_history": [
+          "Paternal grandfather: Stroke",
+          "Mother: Breast cancer",
+          "Father: MI at age 55"
+        ]
+      },
+      "current_medications": [],
+      "social_history": {
+        "smoking": "Current smoker (half pack/day)",
+        "alcohol": "Moderate (1 drink/day)",
+        "drugs": "Denies illicit drug use",
+        "occupation": "Construction worker",
+        "living_situation": "Lives with spouse"
+      },
+      "presenting_complaint": {
+        "chief_complaint": "Fatigue and weight loss",
+        "hpi": "Patient reports 2 months of progressive fatigue, unintentional 15-pound weight loss, and intermittent low-grade fevers. No cough or respiratory symptoms. Has noticed enlarged lymph nodes in neck.",
+        "symptoms": [
+          "fatigue",
+          "weight_loss",
+          "fever"
+        ],
+        "duration": "days",
+        "onset": "gradual",
+        "severity": "moderate"
+      },
+      "vital_signs": {
+        "temperature": 98.7,
+        "heart_rate": 82,
+        "blood_pressure_systolic": 138,
+        "blood_pressure_diastolic": 78,
+        "respiratory_rate": 16,
+        "oxygen_saturation": 95,
+        "recorded_at": "2026-06-01T22:30:16.548387"
+      },
+      "recent_labs": {
+        "recorded_at": "2026-06-01T05:30:16.548390",
+        "glucose": 124,
+        "hba1c": 7.3,
+        "creatinine": 1.1,
+        "bun": 17,
+        "wbc": 8.1,
+        "hemoglobin": 13.0,
+        "platelets": 271
+      },
+      "risk_factors": [],
+      "suspected_condition": "malignancy_workup",
+      "created_at": "2026-06-01T22:30:16.548403"
+    }
+  ]
+}

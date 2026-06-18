@@ -1,0 +1,70 @@
+{
+  "domain": "legal",
+  "version": "1.0",
+  "_notes": "Hand-authored rule set modelling US legal-practice obligations. Maps to: ABA Model Rules of Professional Conduct (1.6 confidentiality, 5.5 unauthorized practice, 7.1 false/misleading communication), attorney-client privilege, and PII-disclosure norms. Patterns are case-insensitive regexes; PII rules match identifier VALUES (not the words describing them) to avoid false positives. Use \\\\b word boundaries for acronyms.",
+  "regulations": [
+    {
+      "id": "LEGAL-001",
+      "name": "Confidential Client Identifier Disclosure",
+      "category": "confidentiality",
+      "description": "Privileged client identifiers (SSN, email, phone, docket/case number) must not be disclosed (ABA Model Rule 1.6)",
+      "severity": "critical",
+      "patterns": [
+        "\\b\\d{3}-\\d{2}-\\d{4}\\b",
+        "\\b\\(?\\d{3}\\)?[-.\\s]\\d{3}[-.\\s]\\d{4}\\b",
+        "\\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}\\b",
+        "\\bcase\\s*(no\\.?|number|#)\\s*:?\\s*\\d{2,}",
+        "\\bdocket\\s*(no\\.?|number|#)\\s*:?\\s*[\\w-]*\\d+"
+      ],
+      "exceptions": ["de-identified", "anonymized", "anonymised", "hypothetical", "sample", "synthetic", "case study", "redacted"]
+    },
+    {
+      "id": "LEGAL-002",
+      "name": "Guarantee of Outcome",
+      "category": "professional_conduct",
+      "description": "Communications must not guarantee or promise a specific legal outcome (ABA Model Rule 7.1 - false or misleading)",
+      "severity": "high",
+      "patterns": [
+        "guarantee[ds]?\\b[^.]{0,40}\\b(win|outcome|verdict|case|result|acquittal)",
+        "\\b100%\\b[^.]{0,30}\\b(win|chance|success)",
+        "\\bcertain(ly)? to (win|prevail|succeed)",
+        "\\byou will (definitely |certainly )?win\\b"
+      ],
+      "exceptions": ["no guarantee", "cannot guarantee", "not a guarantee", "past results"]
+    },
+    {
+      "id": "LEGAL-003",
+      "name": "Unauthorized Practice of Law",
+      "category": "professional_conduct",
+      "description": "Definitive legal advice should be framed as information, not representation, absent an attorney (ABA Model Rule 5.5)",
+      "severity": "high",
+      "patterns": [
+        "\\byou should (sue|plead|sign|file the lawsuit)\\b",
+        "\\bI (am|'m) your (lawyer|attorney|counsel)\\b",
+        "\\bthis constitutes legal representation\\b"
+      ],
+      "exceptions": ["consult an attorney", "qualified attorney", "licensed attorney", "legal counsel", "seek legal advice", "informational purposes"]
+    },
+    {
+      "id": "LEGAL-004",
+      "name": "Attorney Verification Disclaimer Required",
+      "category": "safety",
+      "description": "AI-generated legal content must direct the user to a qualified attorney and note jurisdictional limits",
+      "severity": "medium",
+      "required_phrases": ["consult", "qualified attorney", "licensed attorney", "legal counsel", "jurisdiction", "verify", "professional judgement", "professional judgment"],
+      "exceptions": ["educational", "exam", "question", "academic", "study", "bar exam", "moot", "hypothetical"]
+    },
+    {
+      "id": "LEGAL-005",
+      "name": "Definitive Liability Assertion",
+      "category": "safety",
+      "description": "Statements of guilt or liability should carry appropriate caveats",
+      "severity": "low",
+      "patterns": [
+        "\\byou are (definitely )?(guilty|liable)\\b",
+        "\\bthe defendant is (definitely )?guilty\\b"
+      ],
+      "exceptions": ["may be liable", "could be", "alleged", "potentially", "arguably", "consistent with", "likely"]
+    }
+  ]
+}

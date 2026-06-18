@@ -1,0 +1,75 @@
+"""Primary Domain Agent - domain reasoning via MCP tool calls."""
+from __future__ import annotations
+import logging
+import time
+from typing import TYPE_CHECKING
+
+from adapt_ai.agents.state import AgentState
+from adapt_ai.config import settings
+from adapt_ai.domain.profiles import get_domain_profile
+from adapt_ai.llmops.providers import LLMProvider
+from adapt_ai.llmops.usage import record_llm_call
+
+if TYPE_CHECKING:
+    from adapt_ai.orchestrator.client import MCPClient
+
+logger = logging.getLogger(__name__)
+
+
+def make_primary_node(mcp_client: "MCPClient", provider: LLMProvider):
+
+    async def primary_agent(state: AgentState) -> dict:
+        query = state["query"]
+        context = state.get("retrieved_context", "")
+        feedback = state.get("revision_feedback", "")
+        revision = state.get("revision_count", 0)
+
+        profile = get_domain_profile(state.get("domain"))
+        user_content = f'{profile.label("query")}:\n{query}'
+        if context:
+            user_content += f'\n\n{profile.label("context")}:\n{context}'
+        if feedback:
+            user_content += (
+                f"\n\n[Quality feedback from previous attempt - please address these issues:]\n{feedback}"
+            )
+        if revision > 0:
+            user_content += "\n\nPlease provide an improved, more accurate response."
+
+        try:
+            t0 = time.perf_counter()
+            result = provider.complete(
+                system=profile.personas["primary"],
+                user=user_content,
+                max_tokens=settings.max_tokens,
+                temperature=settings.temperature,
+            )
+            latency = time.perf_counter() - t0
+            record_llm_call(
+                agent="primary" if not feedback else "primary_retry",
+                model=result.model,
+                input_tokens=result.input_tokens,
+                output_tokens=result.output_tokens,
+                latency_s=latency,
+                run_id=state["session_id"],
+            )
+            response_text = result.text
+            statuses = dict(state.get("agent_statuses", {}))
+            statuses["primary"] = "approved"
+            # Increment only on retry (feedback non-empty) - signals to route_after_review
+            # that one revision has already occurred.
+            return {
+                "primary_response": response_text,
+                "revision_count": revision + (1 if feedback else 0),
+                "agent_statuses": statuses,
+                "error": None,
+            }
+        except Exception as e:
+            logger.error("Primary agent error: %s", e)
+            return {
+                "primary_response": "",
+                "revision_count": revision,
+                "error": str(e),
+                "agent_statuses": {**state.get("agent_statuses", {}), "primary": "error"},
+            }
+
+    return primary_agent

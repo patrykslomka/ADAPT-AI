@@ -1,5 +1,11 @@
-#!/usr/bin/env python3
-"""Generate synthetic patient data for ADAPT-AI."""
+
+"""Generate synthetic patient data for ADAPT-AI.
+
+Healthcare-only: produces the clinical subject store consumed by ``PatientHandler``
+and the ``/patients`` endpoint. This is the healthcare reference implementation of
+the pipeline's generic ``subject_id`` hook, not part of the domain-agnostic core or
+the reasoning + safety benchmark. Legal/finance run without a subject store.
+"""
 import json
 import random
 from datetime import datetime, timedelta
@@ -344,7 +350,7 @@ def main():
     data = generate_all_patients(20)
 
     # Save to file
-    output_dir = Path(__file__).parent.parent / "src" / "domain" / "synthetic_patients"
+    output_dir = Path(__file__).parent.parent / "adapt_ai" / "domain" / "synthetic_patients"
     output_dir.mkdir(parents=True, exist_ok=True)
 
     output_file = output_dir / "patients.json"
