@@ -22,7 +22,7 @@
       "id": "LEGAL-002",
       "name": "Guarantee of Outcome",
       "category": "professional_conduct",
-      "description": "Communications must not guarantee or promise a specific legal outcome (ABA Model Rule 7.1 — false or misleading)",
+      "description": "Communications must not guarantee or promise a specific legal outcome (ABA Model Rule 7.1 - false or misleading)",
       "severity": "high",
       "patterns": [
         "guarantee[ds]?\\b[^.]{0,40}\\b(win|outcome|verdict|case|result|acquittal)",

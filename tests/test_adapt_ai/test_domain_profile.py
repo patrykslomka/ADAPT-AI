@@ -1,11 +1,11 @@
 """Tests for the DomainProfile config layer (Bar-3 invariant + threading + regression).
 
 Five test groups:
-1. Loader parity   — healthcare profile exposes verbatim current strings
-2. Lexicon parity  — check_lexicon behaves identically to the old _check_drug_names
-3. Primary threading — domain switch changes system prompt with zero agent-code edits
-4. Disclaimer threading — aggregate_response uses the profile disclaimer
-5. Bar-3 guard     — no domain-specific literals remain in agent/orchestrator/tools code
+1. Loader parity   - healthcare profile exposes verbatim current strings
+2. Lexicon parity  - check_lexicon behaves identically to the old _check_drug_names
+3. Primary threading - domain switch changes system prompt with zero agent-code edits
+4. Disclaimer threading - aggregate_response uses the profile disclaimer
+5. Bar-3 guard     - no domain-specific literals remain in agent/orchestrator/tools code
 """
 from __future__ import annotations
 import asyncio
@@ -23,7 +23,7 @@ FIXTURES = Path(__file__).parent / "fixtures"
 ADAPT_AI_ROOT = Path(__file__).parent.parent.parent / "adapt_ai"
 
 
-# ── 1. Loader parity ──────────────────────────────────────────────────────────
+#  1. Loader parity 
 
 def test_healthcare_profile_loads():
     get_domain_profile.cache_clear()
@@ -86,7 +86,7 @@ def test_missing_profile_falls_back_to_healthcare(tmp_path, monkeypatch):
     get_domain_profile.cache_clear()
 
 
-# ── 2. Lexicon parity ─────────────────────────────────────────────────────────
+#  2. Lexicon parity ─
 
 def test_unknown_drug_suffix_flagged():
     get_domain_profile.cache_clear()
@@ -99,7 +99,7 @@ def test_known_drug_not_flagged():
     get_domain_profile.cache_clear()
     p = get_domain_profile("healthcare")
     warnings = check_lexicon("Administer aspirin 300 mg.", p.lexicon)
-    # "aspirin" does not match the suffix pattern (no listed suffix) — no warnings
+    # "aspirin" does not match the suffix pattern (no listed suffix) - no warnings
     assert warnings == []
 
 
@@ -119,11 +119,11 @@ def test_disabled_lexicon_returns_empty():
     assert check_lexicon("Zzytomycin overdose.", empty) == []
 
 
-# ── 3. Primary threading — domain switch with zero agent-code edits ──────────
+#  3. Primary threading - domain switch with zero agent-code edits 
 
 @pytest.mark.asyncio
 async def test_primary_agent_uses_legal_persona(tmp_path, monkeypatch):
-    """Switch to the legal fixture profile — primary_agent must send the legal
+    """Switch to the legal fixture profile - primary_agent must send the legal
     system persona. No changes to agent code are required, only the profile."""
     get_domain_profile.cache_clear()
 
@@ -164,7 +164,7 @@ async def test_primary_agent_uses_legal_persona(tmp_path, monkeypatch):
 
 @pytest.mark.asyncio
 async def test_primary_agent_uses_healthcare_persona():
-    """Healthcare domain still sends the healthcare persona — regression guard."""
+    """Healthcare domain still sends the healthcare persona - regression guard."""
     get_domain_profile.cache_clear()
 
     from tests.test_adapt_ai.conftest import FakeProvider, FakeMCPClient, make_state
@@ -186,7 +186,7 @@ def user_msg_starts_with(fake_prov, prefix: str) -> bool:
     return fake_prov.calls[0]["user"].startswith(prefix)
 
 
-# ── 4. Disclaimer threading ───────────────────────────────────────────────────
+#  4. Disclaimer threading ─
 
 @pytest.mark.asyncio
 async def test_aggregate_response_healthcare_disclaimer():
@@ -242,7 +242,7 @@ async def test_aggregate_response_legal_disclaimer(tmp_path, monkeypatch):
     get_domain_profile.cache_clear()
 
 
-# ── 5. Bar-3 guard — no domain hardcoding in agent/orchestrator/tools ─────────
+#  5. Bar-3 guard - no domain hardcoding in agent/orchestrator/tools ─
 
 _BANNED = re.compile(
     r"\b(clinical|patient|medical|hipaa|drug|diagnos)",

@@ -1,4 +1,4 @@
-"""Compliance Agent — validates content against domain regulations via MCP."""
+"""Compliance Agent - validates content against domain regulations via MCP."""
 from __future__ import annotations
 import logging
 from typing import TYPE_CHECKING
@@ -12,7 +12,6 @@ logger = logging.getLogger(__name__)
 
 
 def make_compliance_node(mcp_client: "MCPClient"):
-    """Return a LangGraph node function for the Compliance Agent."""
 
     async def compliance_agent(state: AgentState) -> dict:
         content = state.get("primary_response", "")

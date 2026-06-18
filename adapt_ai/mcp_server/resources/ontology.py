@@ -1,4 +1,4 @@
-"""Ontology resource — serves concept data from the domain's OWL file."""
+"""Ontology resource - serves concept data from the domain's OWL file."""
 from adapt_ai.domain.ontology import OntologyGraph
 from adapt_ai.domain.profiles import get_domain_profile
 

@@ -1,12 +1,8 @@
 """Evaluation framework for ADAPT-AI system."""
 
-from .metrics import ClinicalEvaluator, evaluate_response
-from .evaluator import SystemEvaluator
-from .ground_truth import GroundTruthManager
+from .metrics import ResponseEvaluator, evaluate_response
 
 __all__ = [
-    'ClinicalEvaluator',
+    'ResponseEvaluator',
     'evaluate_response',
-    'SystemEvaluator',
-    'GroundTruthManager'
 ]

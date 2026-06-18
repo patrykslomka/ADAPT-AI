@@ -1,4 +1,4 @@
-"""Quality Agent — hallucination detection and confidence scoring via Claude."""
+"""Quality Agent - hallucination detection and confidence scoring via Claude."""
 from __future__ import annotations
 import json
 import logging
@@ -44,7 +44,7 @@ def make_quality_node(mcp_client: "MCPClient", provider: LLMProvider):
         )
         if warnings:
             evaluation_prompt += (
-                "[Pre-check flags — verify these in the response below:]\n"
+                "[Pre-check flags - verify these in the response below:]\n"
                 + "\n".join(f"  • {w}" for w in warnings)
                 + "\n\n"
             )

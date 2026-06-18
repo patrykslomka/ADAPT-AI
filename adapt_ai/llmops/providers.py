@@ -1,8 +1,8 @@
 """Provider abstraction so the pipeline/baseline/judge are model-agnostic.
 
 One synchronous `complete()` returning text + token counts. Two backends:
-  - AnthropicProvider         — Anthropic Messages API (system is a top-level kwarg)
-  - OpenAICompatibleProvider  — OpenAI Chat Completions (also Ollama at /v1, vLLM, etc.)
+  - AnthropicProvider         - Anthropic Messages API (system is a top-level kwarg)
+  - OpenAICompatibleProvider  - OpenAI Chat Completions (also Ollama at /v1, vLLM, etc.)
 """
 from __future__ import annotations
 
@@ -50,7 +50,7 @@ class AnthropicProvider(LLMProvider):
 
 
 class OpenAICompatibleProvider(LLMProvider):
-    """OpenAI Chat Completions shape — works for Ollama, vLLM, OpenAI, etc.
+    """OpenAI Chat Completions shape - works for Ollama, vLLM, OpenAI, etc.
     System prompt is folded into the messages array (no top-level system kwarg)."""
 
     def __init__(self, client: Any, model: str) -> None:

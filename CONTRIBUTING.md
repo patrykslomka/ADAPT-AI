@@ -4,7 +4,7 @@
 
 ```bash
 python -m venv venv && source venv/bin/activate
-pip install -r requirements.txt -r requirements-eval.txt
+pip install -r requirements.txt
 cp .env.example .env   # add your ANTHROPIC_API_KEY
 pytest tests/test_adapt_ai/ -q
 ```

@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+
 """Seed a domain's vector collection from its regulation corpus + ontology.
 
 Usage:
@@ -10,7 +10,7 @@ Each domain's collection (from its profile's ``vector_collection``) is seeded fr
   1. Regulation corpus markdown under data/regulations_corpus/<domain>/*.md  (chunked by section)
   2. Concept terms extracted from the profile's ``ontology_path`` (OWL/RDF/TTL), capped.
 
-No embedding function is passed — Chroma's default must match whatever first seeded the collection.
+No embedding function is passed - Chroma's default must match whatever first seeded the collection.
 """
 import argparse
 import sys
@@ -29,7 +29,7 @@ _ROOT = Path(__file__).parent.parent
 _CORPUS_DIR = _ROOT / "data" / "regulations_corpus"
 
 
-# ── Corpus (markdown) extraction ──────────────────────────────────────────────
+#  Corpus (markdown) extraction 
 
 def _extract_corpus_documents(domain: str):
     """Chunk each data/regulations_corpus/<domain>/*.md file by '## ' sections."""
@@ -65,7 +65,7 @@ def _extract_corpus_documents(domain: str):
     return docs, metas, ids
 
 
-# ── Ontology (OWL/RDF/TTL) extraction ─────────────────────────────────────────
+#  Ontology (OWL/RDF/TTL) extraction ─
 
 def _extract_ontology_documents(owl_path: Path, domain: str, max_terms: int = 500):
     """Extract labelled concept entries from an OWL/RDF/TTL file as text documents."""
@@ -118,7 +118,7 @@ def _extract_ontology_documents(owl_path: Path, domain: str, max_terms: int = 50
     return docs, metas, ids
 
 
-# ── Main ──────────────────────────────────────────────────────────────────────
+#  Main 
 
 def main():
     parser = argparse.ArgumentParser(description="Seed a domain's vector collection.")
@@ -160,7 +160,7 @@ def main():
     metas = c_metas + o_metas
     ids = c_ids + o_ids
     if not docs:
-        print("Nothing to seed — check the corpus directory and ontology path.")
+        print("Nothing to seed - check the corpus directory and ontology path.")
         sys.exit(1)
 
     batch = 100

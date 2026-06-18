@@ -1,4 +1,4 @@
-"""LangGraph StateGraph — ADAPT-AI multi-agent pipeline.
+"""LangGraph StateGraph - ADAPT-AI multi-agent pipeline.
 
 Flow:
     intent_and_retrieve → primary_agent → [compliance_agent ─┐
@@ -25,7 +25,7 @@ from adapt_ai.orchestrator.router import should_use_rat
 logger = logging.getLogger(__name__)
 
 
-# ── Node: intent detection + retrieval ────────────────────────────────────────
+#  Node: intent detection + retrieval 
 
 def make_retrieval_node(mcp_client: MCPClient):
     async def intent_and_retrieve(state: AgentState) -> dict:
@@ -61,7 +61,7 @@ def make_retrieval_node(mcp_client: MCPClient):
     return intent_and_retrieve
 
 
-# ── Node: aggregate final response ────────────────────────────────────────────
+#  Node: aggregate final response 
 
 def make_aggregate_node(append_disclaimer: bool = True):
     async def aggregate_response(state: AgentState) -> dict:
@@ -95,13 +95,13 @@ def make_aggregate_node(append_disclaimer: bool = True):
     return aggregate_response
 
 
-# ── Node: fan-in join after parallel compliance + quality ──────────────────────
+#  Node: fan-in join after parallel compliance + quality 
 
 async def review_results(state: AgentState) -> dict:
     return {}
 
 
-# ── Routing function (replaces route_after_compliance + route_after_quality) ──
+#  Routing function (replaces route_after_compliance + route_after_quality) 
 
 def route_after_review(
     state: AgentState,
@@ -111,15 +111,15 @@ def route_after_review(
     revision_count = state.get("revision_count", 0)
 
     if not compliance.get("passed", True):
-        logger.warning("Compliance rejected — ending pipeline")
+        logger.warning("Compliance rejected - ending pipeline")
         return END
     if not quality.get("passed", True) and revision_count < 1:
-        logger.info("Quality check failed — routing to retry (revision_count=%d)", revision_count)
+        logger.info("Quality check failed - routing to retry (revision_count=%d)", revision_count)
         return "primary_agent"
     return "aggregate_response"
 
 
-# ── Graph construction ────────────────────────────────────────────────────────
+#  Graph construction 
 
 def build_graph(
     mcp_client: MCPClient,

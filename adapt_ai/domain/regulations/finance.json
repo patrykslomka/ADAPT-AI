@@ -36,7 +36,7 @@
     },
     {
       "id": "FIN-003",
-      "name": "Fair Lending — Protected Class",
+      "name": "Fair Lending - Protected Class",
       "category": "fairness",
       "description": "Credit decisions must not reference protected class characteristics (ECOA / Reg B)",
       "severity": "high",

@@ -24,7 +24,7 @@ class SessionManager:
                 self._redis = aioredis.from_url(settings.redis_url, decode_responses=True)
                 logger.info("Redis session manager initialised")
             except Exception as e:
-                logger.warning("Redis unavailable (%s) — using in-memory fallback", e)
+                logger.warning("Redis unavailable (%s) - using in-memory fallback", e)
         else:
             logger.info("Session manager using in-memory store (REDIS_FALLBACK_MEMORY=true)")
 
@@ -34,7 +34,7 @@ class SessionManager:
             cls._instance = cls()
         return cls._instance
 
-    # ── Internal helpers ──────────────────────────────────────────────────────
+    #  Internal helpers 
 
     async def _get_raw(self, key: str) -> Dict:
         if self._redis:
@@ -48,7 +48,7 @@ class SessionManager:
         else:
             _memory_store[key] = data
 
-    # ── Public API ────────────────────────────────────────────────────────────
+    #  Public API 
 
     async def get_context(self, session_id: str) -> Dict[str, Any]:
         return await self._get_raw(f"ctx:{session_id}")

@@ -1,4 +1,4 @@
-"""Typed AgentState — shared across all LangGraph nodes."""
+"""Typed AgentState - shared across all LangGraph nodes."""
 from typing import Annotated, Optional, TypedDict
 
 
@@ -8,27 +8,27 @@ def _merge_dicts(a: dict, b: dict) -> dict:
 
 
 class AgentState(TypedDict):
-    # ── Input ─────────────────────────────────────────────────────────────────
+    #  Input ─
     query: str
     subject_id: Optional[str]     # domain entity id (person/case/account)
     session_id: str
     domain: str             # regulated domain key: "healthcare" | "legal" | "finance"
 
-    # ── Routing ───────────────────────────────────────────────────────────────
+    #  Routing ─
     use_rat: bool           # True → RAT tool; False → RAG tool
     retrieved_context: str  # output of RAG/RAT tool call
 
-    # ── Agent outputs ─────────────────────────────────────────────────────────
+    #  Agent outputs ─
     primary_response: str
     compliance_result: dict     # {"passed": bool, "status": str, "issues": [...]}
     quality_result: dict        # {"passed": bool, "score": float, "issues": [...]}
     final_response: str
 
-    # ── Feedback loop ─────────────────────────────────────────────────────────
+    #  Feedback loop ─
     revision_count: int         # max 1 retry
     revision_feedback: str      # feedback injected into primary agent on retry
 
-    # ── Metadata ──────────────────────────────────────────────────────────────
+    #  Metadata 
     # Annotated with _merge_dicts so parallel compliance + quality writes are merged.
     agent_statuses: Annotated[dict, _merge_dicts]
     error: Optional[str]

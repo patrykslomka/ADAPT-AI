@@ -1,4 +1,4 @@
-"""ChromaDB vector store — wraps per-domain collections."""
+"""ChromaDB vector store - wraps per-domain collections."""
 from typing import List, Dict, Any
 import chromadb
 
@@ -12,7 +12,7 @@ class VectorStore:
 
     def __init__(self, collection_name: str) -> None:
         self._client = chromadb.PersistentClient(path=settings.chroma_persist_dir)
-        # Do not pass an embedding_function — must match whatever seeded each collection.
+        # Do not pass an embedding_function - must match whatever seeded each collection.
         self._collection = self._client.get_or_create_collection(name=collection_name)
 
     @classmethod

@@ -19,7 +19,7 @@ def setup_tracing() -> None:
         return
 
     if not settings.langsmith_api_key:
-        logger.warning("LANGSMITH_TRACING=true but LANGSMITH_API_KEY is not set — tracing disabled")
+        logger.warning("LANGSMITH_TRACING=true but LANGSMITH_API_KEY is not set - tracing disabled")
         return
 
     os.environ["LANGCHAIN_TRACING_V2"] = "true"

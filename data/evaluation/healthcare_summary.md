@@ -14,12 +14,12 @@
 | Safety Score | 0.992 ± 0.040 | 0.832 ± 0.074 | +0.160 |
 | Avg Hallucinations (↓) | 0.000 | 0.000 | +0.000 |
 
-**ADAPT-AI overall score**: 0.322  95% CI [0.277–0.367]
-**Baseline overall score**: 0.248  95% CI [0.200–0.296]
+**ADAPT-AI overall score**: 0.322  95% CI [0.276–0.368]
+**Baseline overall score**: 0.248  95% CI [0.199–0.297]
 
 ## Statistical Significance (Wilcoxon Signed-Rank on overall_score)
 
-p < 0.001 (highly significant) (ADAPT-AI > Baseline, W=190.0, z=-4.32, n=50)
+p < 0.001 (highly significant) (ADAPT-AI > Baseline, W=190.0, p=4.789e-06, r=+0.70, n=50)
 
 ## Per-Category Breakdown
 

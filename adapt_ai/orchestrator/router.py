@@ -1,4 +1,4 @@
-"""Intent detection and routing — decides which building block to invoke."""
+"""Intent detection and routing - decides which building block to invoke."""
 from __future__ import annotations
 import re
 

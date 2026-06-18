@@ -1,5 +1,11 @@
-#!/usr/bin/env python3
-"""Generate synthetic patient data for ADAPT-AI."""
+
+"""Generate synthetic patient data for ADAPT-AI.
+
+Healthcare-only: produces the clinical subject store consumed by ``PatientHandler``
+and the ``/patients`` endpoint. This is the healthcare reference implementation of
+the pipeline's generic ``subject_id`` hook, not part of the domain-agnostic core or
+the reasoning + safety benchmark. Legal/finance run without a subject store.
+"""
 import json
 import random
 from datetime import datetime, timedelta

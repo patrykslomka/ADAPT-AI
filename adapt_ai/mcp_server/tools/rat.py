@@ -1,4 +1,4 @@
-"""RAT tool — multi-step CoT reasoning with iterative retrieval."""
+"""RAT tool - multi-step CoT reasoning with iterative retrieval."""
 from __future__ import annotations
 import logging
 import time
@@ -75,7 +75,7 @@ async def rat_reason(
     if accumulated_context:
         combined_context = accumulated_context + "\n\n---\n\n" + combined_context
 
-    # Step 5: Final synthesis — produce the reasoned answer
+    # Step 5: Final synthesis - produce the reasoned answer
     t0 = time.perf_counter()
     synthesis_result = provider.complete(
         system=profile.personas["rat_synthesis"],

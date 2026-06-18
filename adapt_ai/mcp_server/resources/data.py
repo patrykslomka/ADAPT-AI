@@ -1,4 +1,4 @@
-"""Domain data resource — serves structured data from PostgreSQL/JSON fallback."""
+"""Domain data resource - serves structured data from PostgreSQL/JSON fallback."""
 from adapt_ai.domain.db import DomainDB
 
 
@@ -6,6 +6,8 @@ async def get_domain_data(table: str) -> str:
     """Query domain data store for structured data."""
     import json
     db = DomainDB.get()
+    # "patients" is the healthcare subject store (the reference implementation of
+    # the generic subject_id hook); other domains expose their own tables here.
     if table == "patients":
         rows = await db.list_patients()
         return json.dumps(rows[:5], indent=2, default=str)

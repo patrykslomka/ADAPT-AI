@@ -1,10 +1,10 @@
-#!/usr/bin/env python3
+
 """Domain reasoning + safety benchmark: ADAPT-AI multi-agent vs monolithic baseline.
 
 Domain-agnostic across the configured regulated domains (healthcare / legal / finance).
 Evaluates open-ended queries with ResponseEvaluator (ROUGE-L, concept recall, safety
 score, hallucination detection) instead of letter matching. The router naturally
-decides RAT vs RAG for each query — no override.
+decides RAT vs RAG for each query - no override.
 
 Categories (per domain dataset; healthcare uses DDx/treatment, legal/finance use
 analysis/planning, all share compliance_safety + hallucination_trap).
@@ -20,6 +20,7 @@ import argparse
 import asyncio
 import json
 import logging
+import os
 import sys
 import time
 from pathlib import Path
@@ -29,8 +30,8 @@ sys.path.insert(0, str(Path(__file__).parent.parent))
 from dotenv import load_dotenv
 load_dotenv(Path(__file__).parent.parent / ".env")
 
-from anthropic import Anthropic
 from adapt_ai.config import settings
+from adapt_ai.llmops.providers import get_provider
 from adapt_ai.orchestrator.client import build_mcp_client
 from adapt_ai.agents.graph import build_graph
 from adapt_ai.llmops.tracing import setup_tracing
@@ -41,7 +42,7 @@ setup_tracing()
 
 DATA_DIR = Path(__file__).parent.parent / "data" / "evaluation"
 
-# Per-domain dataset / results filenames — uniform <domain>_* naming.
+# Per-domain dataset / results filenames - uniform <domain>_* naming.
 DATASET_FILES = {
     "healthcare": "healthcare_reasoning_benchmark.json",
     "legal": "legal_reasoning_benchmark.json",
@@ -150,7 +151,7 @@ def _completed_ids(results: list[dict]) -> set:
     return done
 
 
-# ── ADAPT-AI pipeline ─────────────────────────────────────────────────────────
+#  ADAPT-AI pipeline ─
 
 async def run_adapt_ai(pipeline, item: dict, q_id: int, domain: str) -> dict:
     query = item["query"]
@@ -214,21 +215,23 @@ async def run_adapt_ai(pipeline, item: dict, q_id: int, domain: str) -> dict:
     }
 
 
-# ── Monolithic baseline ───────────────────────────────────────────────────────
+#  Monolithic baseline ─
 
-def run_baseline(client: Anthropic, item: dict, system_prompt: str,
+def run_baseline(provider, item: dict, system_prompt: str,
                  retrieved_context: str = "") -> dict:
+    """Monolithic single-call baseline. Routed through the provider abstraction so
+    the baseline runs on the SAME model as ADAPT-AI in every matrix cell (Haiku /
+    Sonnet / Qwen) - the homogeneous-model control that isolates architecture."""
     user_content = item["query"]
     if retrieved_context:
         user_content = f"Context:\n{retrieved_context}\n\nQuery:\n{user_content}"
     t0 = time.perf_counter()
     try:
-        resp = client.messages.create(
-            model=settings.model_name,
-            max_tokens=settings.max_tokens,  # equal token budget — concept recall is length-sensitive
-            temperature=0.3,
+        result = provider.complete(
             system=system_prompt,
-            messages=[{"role": "user", "content": user_content}],
+            user=user_content,
+            max_tokens=settings.max_tokens,  # equal token budget - concept recall is length-sensitive
+            temperature=0.3,
         )
     except Exception as e:
         return {
@@ -239,36 +242,63 @@ def run_baseline(client: Anthropic, item: dict, system_prompt: str,
         }
 
     elapsed = time.perf_counter() - t0
-    text = resp.content[0].text
-    cost = compute_cost(resp.usage.input_tokens, resp.usage.output_tokens)
+    text = result.text
+    cost = compute_cost(result.input_tokens, result.output_tokens)
 
     return {
         "response": text,
         "time": round(elapsed, 3),
         "cost": round(cost, 6),
-        "input_tokens": resp.usage.input_tokens,
-        "output_tokens": resp.usage.output_tokens,
+        "input_tokens": result.input_tokens,
+        "output_tokens": result.output_tokens,
         "response_len_chars": len(text),
         "error": None,
     }
 
 
-# ── Main benchmark loop ───────────────────────────────────────────────────────
+#  Main benchmark loop ─
 
 async def benchmark(items: list[dict], domain: str, results_path: Path, baseline_prompt: str,
                     resume: bool, use_bertscore: bool, use_llm_judge: bool,
                     include_quality: bool = True,
+                    include_compliance: bool = True,
+                    append_disclaimer: bool = True,
                     baseline_variant: str = "b1_disclaimer") -> None:
-    client = Anthropic(api_key=settings.anthropic_api_key.get_secret_value())
+    provider = get_provider()  # same model/provider as the pipeline (settings-driven)
+
+    judge = None
+    if use_llm_judge:
+        from evaluation.judge import Judge
+        judge = Judge.from_settings(sut_model=settings.model_name)
+        print(f"Judge: {judge._provider.model} (SUT: {judge.sut_model})")
+
     evaluator = ResponseEvaluator(
         use_bertscore=use_bertscore,
-        use_llm_judge=use_llm_judge,
-        anthropic_api_key=settings.anthropic_api_key.get_secret_value() if use_llm_judge else None,
+        judge=judge,
     )
+
+    results_path.parent.mkdir(parents=True, exist_ok=True)
+    run_config = {
+        "domain": domain,
+        "model": settings.model_name,
+        "baseline_variant": baseline_variant,
+        "ablations": {
+            "quality": include_quality,
+            "compliance": include_compliance,
+            "disclaimer": append_disclaimer,
+        },
+    }
+    config_path = results_path.parent / f"{domain}_run_config.json"
+    config_path.write_text(json.dumps(run_config, indent=2), encoding="utf-8")
 
     print(f"Initialising ADAPT-AI pipeline (LangGraph + MCP) for domain='{domain}'…")
     mcp_client = build_mcp_client()
-    pipeline = build_graph(mcp_client, include_quality=include_quality)
+    pipeline = build_graph(
+        mcp_client,
+        include_quality=include_quality,
+        include_compliance=include_compliance,
+        append_disclaimer=append_disclaimer,
+    )
     print("Pipeline ready.\n")
 
     results: list[dict] = []
@@ -292,7 +322,7 @@ async def benchmark(items: list[dict], domain: str, results_path: Path, baseline
         # For b2_rag/b3_persona, pass the same retrieved context as ADAPT-AI used.
         rag_ctx = adapt_raw.get("retrieved_context_text", "")
         base_raw = run_baseline(
-            client, item, sys_prompt,
+            provider, item, sys_prompt,
             retrieved_context=rag_ctx if baseline_variant in ("b2_rag", "b3_persona") else "",
         )
 
@@ -389,17 +419,34 @@ def main() -> None:
     parser.add_argument("--no-quality", action="store_true",
                         help="Ablation: run without the quality agent")
     parser.add_argument(
+        "--no-compliance",
+        action="store_true",
+        help="Ablation: run without the compliance agent",
+    )
+    parser.add_argument(
+        "--no-disclaimer",
+        action="store_true",
+        help="Ablation: run without the deterministic disclaimer append",
+    )
+    parser.add_argument(
         "--baseline-variant",
         choices=("b0_bare", "b1_disclaimer", "b2_rag", "b3_persona"),
         default="b1_disclaimer",
         dest="baseline_variant",
-        help="Which single-call baseline to compare against (default: b1_disclaimer — fair headline control)",
+        help="Which single-call baseline to compare against (default: b1_disclaimer - fair headline control)",
     )
     args = parser.parse_args()
 
     domain = args.domain
     dataset_path = DATA_DIR / DATASET_FILES[domain]
-    results_path = DATA_DIR / RESULTS_FILES[domain]
+
+    bench_results_dir = os.environ.get("BENCH_RESULTS_DIR")
+    if bench_results_dir:
+        results_dir = Path(bench_results_dir)
+    else:
+        results_dir = DATA_DIR
+    results_path = results_dir / RESULTS_FILES[domain]
+
     baseline_prompt = BASELINE_PROMPTS[domain]
 
     if not dataset_path.exists():
@@ -419,6 +466,8 @@ def main() -> None:
         use_bertscore=not args.no_bertscore,
         use_llm_judge=args.judge,
         include_quality=not args.no_quality,
+        include_compliance=not args.no_compliance,
+        append_disclaimer=not args.no_disclaimer,
         baseline_variant=args.baseline_variant,
     ))
 

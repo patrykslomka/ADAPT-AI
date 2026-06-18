@@ -1,4 +1,4 @@
-"""Primary Domain Agent — domain reasoning via MCP tool calls."""
+"""Primary Domain Agent - domain reasoning via MCP tool calls."""
 from __future__ import annotations
 import logging
 import time
@@ -30,7 +30,7 @@ def make_primary_node(mcp_client: "MCPClient", provider: LLMProvider):
             user_content += f'\n\n{profile.label("context")}:\n{context}'
         if feedback:
             user_content += (
-                f"\n\n[Quality feedback from previous attempt — please address these issues:]\n{feedback}"
+                f"\n\n[Quality feedback from previous attempt - please address these issues:]\n{feedback}"
             )
         if revision > 0:
             user_content += "\n\nPlease provide an improved, more accurate response."
@@ -55,7 +55,7 @@ def make_primary_node(mcp_client: "MCPClient", provider: LLMProvider):
             response_text = result.text
             statuses = dict(state.get("agent_statuses", {}))
             statuses["primary"] = "approved"
-            # Increment only on retry (feedback non-empty) — signals to route_after_review
+            # Increment only on retry (feedback non-empty) - signals to route_after_review
             # that one revision has already occurred.
             return {
                 "primary_response": response_text,

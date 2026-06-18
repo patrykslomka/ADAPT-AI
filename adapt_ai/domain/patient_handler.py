@@ -1,4 +1,12 @@
-"""Patient data handler."""
+"""Patient data handler.
+
+Healthcare-specific reference implementation of the generic ``subject_id`` hook.
+The pipeline itself is domain-agnostic and only ever sees an opaque ``subject_id``
+(see ``QueryRequest.subject_id``); this handler is one domain's realisation of that
+hook, modelling a clinical patient (vitals, allergies, medications, history). Legal
+and finance have no equivalent subject store today — adding one means a sibling
+handler, not a change to the agents/orchestrator.
+"""
 import json
 from pathlib import Path
 from typing import Dict, Optional, List

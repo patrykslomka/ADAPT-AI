@@ -29,7 +29,7 @@ def _price_for(model: str) -> tuple[float, float]:
     for prefix, prices in _PRICES.items():
         if model.startswith(prefix):
             return prices
-    logger.warning("Unknown model %r — using conservative fallback pricing", model)
+    logger.warning("Unknown model %r - using conservative fallback pricing", model)
     return _FALLBACK_PRICES
 
 

@@ -72,3 +72,24 @@ def test_openai_compatible_provider_folds_system_into_messages():
     msgs = _FakeOpenAICompletions.last_kwargs["messages"]
     assert msgs[0] == {"role": "system", "content": "sys"}
     assert msgs[1] == {"role": "user", "content": "hi"}
+
+
+def test_judge_refuses_same_model_as_sut():
+    from evaluation.judge import build_judge
+    with pytest.raises(ValueError, match="same model"):
+        build_judge(provider="anthropic", model="claude-haiku-4-5-20251001",
+                    sut_model="claude-haiku-4-5-20251001")
+
+
+def test_judge_parses_numeric_score():
+    from evaluation.judge import Judge
+    from adapt_ai.llmops.providers import CompletionResult
+
+    class _FakeJudgeProvider:
+        model = "claude-opus-4-8"
+        def complete(self, **kw):
+            return CompletionResult("0.8", 1, 1, "claude-opus-4-8")
+
+    j = Judge.from_provider(_FakeJudgeProvider(), sut_model="claude-haiku-4-5-20251001")
+    score = j.score(prediction="some answer", reference="gold answer", query="the question")
+    assert score == pytest.approx(0.8)

@@ -1,4 +1,4 @@
-"""Rule-based validation tool — checks content against domain regulations."""
+"""Rule-based validation tool - checks content against domain regulations."""
 from __future__ import annotations
 import json
 import re
@@ -66,7 +66,7 @@ async def validate_output(content: str, domain: str = "healthcare") -> Dict[str,
             ):
                 issues.append({
                     "rule_id": rule_id,
-                    "description": f"{rule['description']} — required phrase missing",
+                    "description": f"{rule['description']} - required phrase missing",
                     "severity": severity,
                 })
                 suggestions.append(

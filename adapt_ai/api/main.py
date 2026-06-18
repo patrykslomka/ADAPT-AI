@@ -1,15 +1,12 @@
-"""FastAPI application — thin HTTP wrapper over the LangGraph pipeline."""
+"""FastAPI application - thin HTTP wrapper over the LangGraph pipeline."""
 from __future__ import annotations
 import logging
 import time
 import uuid
 from contextlib import asynccontextmanager
-from pathlib import Path
 from typing import Optional
 
 from fastapi import FastAPI, HTTPException
-from fastapi.responses import FileResponse
-from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 
 from adapt_ai.orchestrator.client import build_mcp_client, MCPClient
@@ -18,11 +15,9 @@ from adapt_ai.agents.graph import build_graph
 from adapt_ai.llmops.tracing import setup_tracing
 from adapt_ai.domain.patient_handler import PatientHandler
 
-_UI_DIR = Path(__file__).parent.parent.parent / "ui"
-
 logger = logging.getLogger(__name__)
 
-# ── Shared state (initialised at startup) ─────────────────────────────────────
+#  Shared state (initialised at startup) ─
 _mcp_client: MCPClient | None = None
 _pipeline = None  # compiled LangGraph app
 
@@ -41,12 +36,8 @@ async def lifespan(app: FastAPI):
 
 app = FastAPI(title="ADAPT-AI", version="2.0.0", lifespan=lifespan)
 
-# Serve ui/ as static files (CSS, JS assets if any)
-if _UI_DIR.exists():
-    app.mount("/ui", StaticFiles(directory=str(_UI_DIR)), name="ui")
 
-
-# ── Request / response models ─────────────────────────────────────────────────
+#  Request / response models ─
 
 class QueryRequest(BaseModel):
     query: str
@@ -62,11 +53,11 @@ class QueryResponse(BaseModel):
     metadata: dict
 
 
-# ── Routes ────────────────────────────────────────────────────────────────────
+#  Routes 
 
 @app.get("/", include_in_schema=False)
 async def index():
-    return FileResponse(str(_UI_DIR / "index.html"))
+    return {"service": "ADAPT-AI", "version": "2.0.0", "docs": "/docs"}
 
 
 @app.get("/health")
@@ -125,7 +116,7 @@ async def query(request: QueryRequest):
             + (f" (matched: \"{i['matched_text']}\")" if i.get("matched_text") else "")
             for i in issues
         ]
-        content = "**Response withheld — compliance check failed.**\n\n" + (
+        content = "**Response withheld - compliance check failed.**\n\n" + (
             "\n".join(detail_lines) if detail_lines else "No specific issues reported."
         )
         return QueryResponse(

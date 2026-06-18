@@ -1,4 +1,4 @@
-"""Regulations resource — serves JSON schema regulations via MCP resource protocol."""
+"""Regulations resource - serves JSON schema regulations via MCP resource protocol."""
 import json
 from adapt_ai.config import settings
 

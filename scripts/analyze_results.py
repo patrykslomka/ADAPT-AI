@@ -1,23 +1,24 @@
-#!/usr/bin/env python3
-"""Analyze clinical reasoning benchmark results.
+"""Analyze domain reasoning benchmark results (healthcare / legal / finance).
 
-Reads data/evaluation/clinical_benchmark_results.json and produces:
+Reads data/evaluation/<domain>_benchmark_results.json and produces:
   - Per-metric aggregate comparison (ROUGE-L, concept recall, safety, hallucinations)
   - Per-category breakdowns with delta
   - Wilcoxon signed-rank test for statistical significance on overall_score
   - RAT routing statistics per category
   - Per-question comparison table
-  - data/evaluation/clinical_report.json
-  - data/evaluation/clinical_summary.md
+  - data/evaluation/<domain>_report.json
+  - data/evaluation/<domain>_summary.md
 
 Usage:
-    python scripts/analyze_clinical_results.py
+    python scripts/analyze_results.py --domain healthcare
+    python scripts/analyze_results.py --domain legal
 """
 import json
 import math
 import sys
 from collections import defaultdict
 from pathlib import Path
+from scipy.stats import wilcoxon as _scipy_wilcoxon, rankdata as _rankdata, t as _t_dist
 
 sys.path.insert(0, str(Path(__file__).parent.parent))
 from dotenv import load_dotenv
@@ -25,22 +26,31 @@ load_dotenv(Path(__file__).parent.parent / ".env")
 from adapt_ai.config import settings
 
 DATA_DIR = Path(__file__).parent.parent / "data" / "evaluation"
-RESULTS_PATH = DATA_DIR / "clinical_benchmark_results.json"
-REPORT_PATH = DATA_DIR / "clinical_report.json"
-SUMMARY_PATH = DATA_DIR / "clinical_summary.md"
 
-CATEGORIES = [
-    "complex_reasoning",
-    "differential_diagnosis",
-    "treatment_planning",
-    "compliance_safety",
-    "hallucination_trap",
-]
+# Per-domain results/report/summary filenames - uniform <domain>_* naming.
+RESULTS_FILES = {
+    "healthcare": "healthcare_benchmark_results.json",
+    "legal": "legal_benchmark_results.json",
+    "finance": "finance_benchmark_results.json",
+}
+REPORT_FILES = {
+    "healthcare": "healthcare_report.json",
+    "legal": "legal_report.json",
+    "finance": "finance_report.json",
+}
+SUMMARY_FILES = {
+    "healthcare": "healthcare_summary.md",
+    "legal": "legal_summary.md",
+    "finance": "finance_summary.md",
+}
+
+# Category order is derived from the data at runtime (domains differ); this is only a fallback.
+CATEGORIES: list[str] = []
 
 METRICS = ["overall_score", "rouge_l", "concept_recall", "safety_score"]
 
 
-# ── statistics ────────────────────────────────────────────────────────────────
+#  statistics 
 
 def safe_mean(values: list) -> float | None:
     vals = [v for v in values if v is not None]
@@ -55,57 +65,86 @@ def safe_std(values: list) -> float | None:
     return round(math.sqrt(sum((x - m) ** 2 for x in vals) / (len(vals) - 1)), 4)
 
 
-def wilcoxon_signed_rank(diffs: list[float]) -> tuple[float | None, str]:
-    """Wilcoxon signed-rank test (exact for n≤25, normal approximation otherwise).
+def wilcoxon_signed_rank(diffs: list[float]) -> tuple[float | None, float, str]:
+    """Wilcoxon signed-rank test via scipy.
 
-    Returns (W_statistic, interpretation).
+    Returns (W_statistic, p_value, summary_string).
+    Uses scipy's exact/normal approximation with tie correction.
     """
-    nonzero = [(i, d) for i, d in enumerate(diffs) if d != 0.0]
-    if not nonzero:
-        return None, "All differences are zero — test not applicable."
+    nz = [d for d in diffs if d != 0.0]
+    if not nz:
+        return None, 1.0, "All differences zero - test not applicable."
 
-    n = len(nonzero)
-    sorted_by_abs = sorted(nonzero, key=lambda x: abs(x[1]))
-    ranks = {idx: rank + 1 for rank, (idx, _) in enumerate(sorted_by_abs)}
+    stat, p = _scipy_wilcoxon(nz, zero_method="wilcox", correction=False,
+                              alternative="two-sided")
+    p_val = float(p)
+    n = len(nz)
+    r = rank_biserial(diffs)
 
-    W_plus = sum(ranks[i] for i, d in nonzero if d > 0)
-    W_minus = sum(ranks[i] for i, d in nonzero if d < 0)
-    W = min(W_plus, W_minus)
+    pos = sum(d > 0 for d in nz)
+    neg = sum(d < 0 for d in nz)
+    direction = "ADAPT-AI > Baseline" if pos > neg else "Baseline > ADAPT-AI"
 
-    # Normal approximation (valid for n≥10; for small n use exact table)
-    mean_W = n * (n + 1) / 4
-    std_W = math.sqrt(n * (n + 1) * (2 * n + 1) / 24)
-    if std_W == 0:
-        return W, "Cannot compute z-score (zero variance)."
-    z = (W - mean_W) / std_W
-    abs_z = abs(z)
-
-    if abs_z >= 3.09:
+    if p_val < 0.001:
         sig = "p < 0.001 (highly significant)"
-    elif abs_z >= 2.576:
+    elif p_val < 0.01:
         sig = "p < 0.01 (significant)"
-    elif abs_z >= 1.96:
+    elif p_val < 0.05:
         sig = "p < 0.05 (significant)"
     else:
-        sig = "p ≥ 0.05 (not significant)"
+        sig = f"p = {p_val:.3f} (not significant)"
 
-    direction = "ADAPT-AI > Baseline" if W_plus > W_minus else "Baseline > ADAPT-AI"
-    return round(W, 2), f"{sig} ({direction}, W={W:.1f}, z={z:.2f}, n={n})"
+    summary = f"{sig} ({direction}, W={stat:.1f}, p={p_val:.4g}, r={r:+.2f}, n={n})"
+    return round(float(stat), 2), p_val, summary
 
 
-def wilson_ci(values: list[float], z: float = 1.96) -> tuple[float, float]:
-    """95% CI via t-distribution approximation for a mean score."""
+def rank_biserial(diffs: list[float]) -> float:
+    """Matched-pairs rank-biserial effect size for the Wilcoxon signed-rank test.
+
+    Returns a value in [-1, 1]. Positive = ADAPT-AI tends to be higher.
+    """
+    nz = [d for d in diffs if d != 0.0]
+    if not nz:
+        return 0.0
+    ranks = _rankdata([abs(d) for d in nz])
+    w_plus = sum(r for r, d in zip(ranks, nz) if d > 0)
+    total = float(ranks.sum())
+    return float(2 * w_plus / total - 1) if total > 0 else 0.0
+
+
+def holm_correct(pvals: list[float]) -> list[float]:
+    """Holm–Bonferroni step-down correction.
+
+    Returns adjusted p-values in the same order as the input list.
+    Each adjusted value is min(1.0, (m - rank) * raw_p), monotone-enforced.
+    """
+    m = len(pvals)
+    if m == 0:
+        return []
+    order = sorted(range(m), key=lambda i: pvals[i])
+    adj = [0.0] * m
+    running = 0.0
+    for step, idx in enumerate(order):
+        corrected = (m - step) * pvals[idx]
+        running = max(running, corrected)
+        adj[idx] = min(1.0, running)
+    return adj
+
+
+def wilson_ci(values: list[float], z: float | None = None) -> tuple[float, float]:
+    """95% CI for a mean score via t-distribution."""
     vals = [v for v in values if v is not None]
     n = len(vals)
     if n == 0:
         return (0.0, 0.0)
     m = sum(vals) / n
     std = math.sqrt(sum((x - m) ** 2 for x in vals) / max(n - 1, 1))
-    margin = z * std / math.sqrt(n)
+    t_crit = z if z is not None else float(_t_dist.ppf(0.975, df=max(n - 1, 1)))
+    margin = t_crit * std / math.sqrt(n)
     return (round(max(0.0, m - margin), 4), round(min(1.0, m + margin), 4))
 
 
-# ── helpers ───────────────────────────────────────────────────────────────────
+#  helpers ─
 
 def extract_metric(results: list[dict], pipeline: str, metric: str) -> list:
     return [r[pipeline].get(metric) for r in results]
@@ -125,22 +164,152 @@ def fmt_delta(a, b) -> str:
     return f"{a - b:+.3f}"
 
 
-# ── main ──────────────────────────────────────────────────────────────────────
+#  matrix mode ─
+
+def _summarise_results(results: list[dict]) -> dict:
+    """Compute summary statistics from a list of benchmark result records."""
+    adapt_scores = [r["adapt_ai"].get("overall_score") for r in results
+                    if r.get("adapt_ai", {}).get("overall_score") is not None]
+    base_scores  = [r["baseline"].get("overall_score") for r in results
+                    if r.get("baseline", {}).get("overall_score") is not None]
+    adapt_disc   = [1.0 if r["adapt_ai"].get("has_disclaimer") else 0.0
+                    for r in results if "adapt_ai" in r]
+
+    if not adapt_scores or not base_scores:
+        return {}
+
+    adapt_mean = sum(adapt_scores) / len(adapt_scores)
+    base_mean  = sum(base_scores)  / len(base_scores)
+    diffs      = [a - b for a, b in zip(adapt_scores, base_scores)]
+    delta      = adapt_mean - base_mean
+
+    try:
+        W, p_val, _ = wilcoxon_signed_rank(diffs)
+        r = rank_biserial(diffs)
+    except Exception:
+        W, p_val, r = None, 1.0, 0.0
+
+    disc_rate = (sum(adapt_disc) / len(adapt_disc)) if adapt_disc else 0.0
+
+    return {
+        "adapt_mean": adapt_mean,
+        "base_mean": base_mean,
+        "delta": delta,
+        "p_overall": p_val,
+        "r": r,
+        "disclaimer_rate": disc_rate,
+        "n": len(adapt_scores),
+    }
+
+
+def _print_matrix_table() -> None:
+    """Print a combined model x domain results table from matrix run outputs."""
+    MATRIX_DIR = DATA_DIR / "matrix"
+    if not MATRIX_DIR.exists():
+        print("[matrix] No matrix results found. Run scripts/run_matrix.py first.")
+        return
+
+    MODELS  = ["haiku", "sonnet", "qwen7b"]
+    DOMAINS = ["healthcare", "legal", "finance"]
+
+    # Collect all available cells
+    cells: dict[tuple[str, str], dict] = {}
+    for model in MODELS:
+        for domain in DOMAINS:
+            path = MATRIX_DIR / model / f"{domain}_benchmark_results.json"
+            if not path.exists():
+                continue
+            try:
+                raw     = json.loads(path.read_text(encoding="utf-8"))
+                results = raw if isinstance(raw, list) else raw.get("results", [])
+                cells[(model, domain)] = _summarise_results(results)
+            except Exception as e:
+                print(f"[warn] Could not read {path}: {e}", file=sys.stderr)
+
+    if not cells:
+        print("[matrix] No readable result files found.")
+        return
+
+    # Print headline table
+    print("\n## Cross-Model Results (ADAPT-AI full vs b1_disclaimer baseline)\n")
+    print(f"{'Model':<8} {'Domain':<12} {'ADAPT':>7} {'Base':>7} {'Δ':>7} "
+          f"{'r':>6} {'p-corr':>8} {'disclaimer%':>12}")
+    print("-" * 75)
+
+    all_p:      list[float]              = []
+    cell_order: list[tuple[str, str]]    = []
+    for model in MODELS:
+        for domain in DOMAINS:
+            if (model, domain) in cells:
+                cell_order.append((model, domain))
+                all_p.append(cells[(model, domain)].get("p_overall", 1.0))
+
+    corrected_p = holm_correct(all_p) if all_p else []
+
+    for i, (model, domain) in enumerate(cell_order):
+        c      = cells[(model, domain)]
+        adapt  = c.get("adapt_mean",      "N/A")
+        base   = c.get("base_mean",       "N/A")
+        delta  = c.get("delta",           "N/A")
+        r      = c.get("r",               "N/A")
+        p_adj  = corrected_p[i] if corrected_p else "N/A"
+        disc   = c.get("disclaimer_rate", "N/A")
+
+        adapt_s = f"{adapt:.3f}"  if isinstance(adapt, float) else adapt
+        base_s  = f"{base:.3f}"   if isinstance(base,  float) else base
+        delta_s = f"{delta:+.3f}" if isinstance(delta, float) else delta
+        r_s     = f"{r:+.2f}"    if isinstance(r,     float) else r
+        p_s     = f"{p_adj:.4f}" if isinstance(p_adj, float) else p_adj
+        disc_s  = f"{disc:.0%}"  if isinstance(disc,  float) else disc
+
+        print(f"{model:<8} {domain:<12} {adapt_s:>7} {base_s:>7} {delta_s:>7} "
+              f"{r_s:>6} {p_s:>8} {disc_s:>12}")
+
+    print()
+
+
+#  main 
 
 def main() -> None:
-    if not RESULTS_PATH.exists():
-        sys.exit(f"ERROR: {RESULTS_PATH} not found. Run run_clinical_benchmark.py first.")
+    import argparse
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--domain", choices=sorted(RESULTS_FILES), default="healthcare",
+                        help="Domain whose benchmark results to analyse (default: healthcare)")
+    parser.add_argument(
+        "--matrix",
+        action="store_true",
+        help="Read matrix results from data/evaluation/matrix/<model>/ and emit combined table",
+    )
+    args = parser.parse_args()
 
-    results = json.loads(RESULTS_PATH.read_text(encoding="utf-8"))
+    if args.matrix:
+        _print_matrix_table()
+        return
+
+    domain = args.domain
+
+    results_path = DATA_DIR / RESULTS_FILES[domain]
+    report_path = DATA_DIR / REPORT_FILES[domain]
+    summary_path = DATA_DIR / SUMMARY_FILES[domain]
+
+    if not results_path.exists():
+        sys.exit(f"ERROR: {results_path} not found. "
+                 f"Run: python scripts/run_benchmark.py --domain {domain}")
+
+    results = json.loads(results_path.read_text(encoding="utf-8"))
     n = len(results)
     if n == 0:
         sys.exit("ERROR: results file is empty.")
 
+    # Categories are domain-specific - derive them from the data, preserving order.
+    global CATEGORIES
+    CATEGORIES = list(dict.fromkeys(r["category"] for r in results))
+
     print(f"\n{'='*64}")
-    print(f"  Clinical Reasoning Benchmark Analysis  ({n} questions)")
+    print(f"  {domain.title()} Reasoning Benchmark Analysis  ({n} questions)")
     print(f"{'='*64}")
 
-    # ── aggregate metrics ─────────────────────────────────────────────────────
+    #  aggregate metrics ─
     print(f"\n{'─'*64}")
     print("Aggregate Metrics (mean ± SD)")
     print(f"{'─'*64}")
@@ -179,7 +348,7 @@ def main() -> None:
         agg_data["adapt_ai"][metric] = {"mean": adapt_m}
         agg_data["baseline"][metric] = {"mean": base_m}
 
-    # ── statistical significance on overall_score ─────────────────────────────
+    #  statistical significance on overall_score ─
     adapt_overall = [r["adapt_ai"].get("overall_score") for r in results]
     base_overall = [r["baseline"].get("overall_score") for r in results]
     diffs = [
@@ -188,30 +357,30 @@ def main() -> None:
         if a is not None and b is not None
     ]
 
-    W, sig_str = wilcoxon_signed_rank(diffs)
+    W, _p_overall, sig_str = wilcoxon_signed_rank(diffs)
     adapt_ci = wilson_ci(adapt_overall)
     base_ci = wilson_ci(base_overall)
     adapt_mean_overall = safe_mean(adapt_overall)
     base_mean_overall = safe_mean(base_overall)
 
     print(f"\n{'─'*64}")
-    print("Statistical Significance — Wilcoxon Signed-Rank Tests")
+    print("Statistical Significance - Wilcoxon Signed-Rank Tests")
     print(f"{'─'*64}")
-    print(f"  overall_score (n=30)")
+    print(f"  overall_score (n={len(diffs)})")
     print(f"    ADAPT-AI mean: {fmt(adapt_mean_overall)}  95% CI [{adapt_ci[0]:.3f}–{adapt_ci[1]:.3f}]")
     print(f"    Baseline mean: {fmt(base_mean_overall)}  95% CI [{base_ci[0]:.3f}–{base_ci[1]:.3f}]")
     print(f"    Δ: {fmt_delta(adapt_mean_overall, base_mean_overall)}  →  {sig_str}")
 
-    # safety_score (n=30) — ADAPT-AI's strongest advantage
+    # safety_score (n=30) - ADAPT-AI's strongest advantage
     adapt_safety = [r["adapt_ai"].get("safety_score") for r in results]
     base_safety = [r["baseline"].get("safety_score") for r in results]
     safety_diffs = [a - b for a, b in zip(adapt_safety, base_safety) if a is not None and b is not None]
-    W_s, sig_s = wilcoxon_signed_rank(safety_diffs)
+    W_s, _p_safety, sig_s = wilcoxon_signed_rank(safety_diffs)
     adapt_safety_ci = wilson_ci(adapt_safety)
     base_safety_ci = wilson_ci(base_safety)
     adapt_safety_mean = safe_mean(adapt_safety)
     base_safety_mean = safe_mean(base_safety)
-    print(f"\n  safety_score (n=30)")
+    print(f"\n  safety_score (n={len(safety_diffs)})")
     print(f"    ADAPT-AI mean: {fmt(adapt_safety_mean)}  95% CI [{adapt_safety_ci[0]:.3f}–{adapt_safety_ci[1]:.3f}]")
     print(f"    Baseline mean: {fmt(base_safety_mean)}  95% CI [{base_safety_ci[0]:.3f}–{base_safety_ci[1]:.3f}]")
     print(f"    Δ: {fmt_delta(adapt_safety_mean, base_safety_mean)}  →  {sig_s}")
@@ -222,12 +391,12 @@ def main() -> None:
     comp_a = [r["adapt_ai"].get("overall_score") for r in comp_results]
     comp_b = [r["baseline"].get("overall_score") for r in comp_results]
     comp_diffs = [a - b for a, b in zip(comp_a, comp_b) if a is not None and b is not None]
-    W_c, sig_c = wilcoxon_signed_rank(comp_diffs)
-    print(f"\n  overall_score — compliance_safety category (n=6)")
+    W_c, _p_comp, sig_c = wilcoxon_signed_rank(comp_diffs)
+    print(f"\n  overall_score - compliance_safety category (n={len(comp_results)})")
     print(f"    ADAPT-AI mean: {fmt(safe_mean(comp_a))}  Baseline mean: {fmt(safe_mean(comp_b))}")
     print(f"    Δ: {fmt_delta(safe_mean(comp_a), safe_mean(comp_b))}  →  {sig_c}")
 
-    # ── per-category breakdown ────────────────────────────────────────────────
+    #  per-category breakdown 
     print(f"\n{'─'*64}")
     print("Per-Category Breakdown (mean overall_score)")
     print(f"{'─'*64}")
@@ -282,7 +451,7 @@ def main() -> None:
             f"hallucs: A={a_h} B={b_h}"
         )
 
-    # ── RAT routing summary ───────────────────────────────────────────────────
+    #  RAT routing summary ─
     total_rat = sum(1 for r in results if r["adapt_ai"].get("use_rat"))
     print(f"\n{'─'*64}")
     print(f"RAT Routing: {total_rat}/{n} queries routed to RAT ({total_rat/n*100:.1f}%)")
@@ -294,7 +463,7 @@ def main() -> None:
         bar = "█" * rat + "░" * (n_c - rat)
         print(f"  {cat:<25} [{bar}] {rat}/{n_c}")
 
-    # ── per-question table ────────────────────────────────────────────────────
+    #  per-question table 
     print(f"\n{'─'*64}")
     print("Per-Question Score Table")
     print(f"{'─'*64}")
@@ -311,7 +480,7 @@ def main() -> None:
             f"{fmt(a):>7}  {fmt(b):>7}  {delta_q:>7}  {rat_mark}"
         )
 
-    # ── response time ─────────────────────────────────────────────────────────
+    #  response time ─
     adapt_times = [r["adapt_ai"].get("time") for r in results]
     base_times = [r["baseline"].get("time") for r in results]
     adapt_avg_t = safe_mean(adapt_times)
@@ -327,7 +496,7 @@ def main() -> None:
     if adapt_avg_t and base_avg_t and base_avg_t > 0:
         print(f"  ADAPT-AI is {adapt_avg_t / base_avg_t:.1f}× slower than Baseline")
 
-    # ── cost ──────────────────────────────────────────────────────────────────
+    #  cost 
     base_costs = [r["baseline"].get("cost") for r in results if r["baseline"].get("cost") is not None]
     adapt_costs = [r["adapt_ai"].get("total_cost_usd") for r in results if r["adapt_ai"].get("total_cost_usd") is not None]
     print(f"\n{'─'*64}")
@@ -349,7 +518,7 @@ def main() -> None:
         ratio = (sum(adapt_costs) / len(adapt_costs)) / (sum(base_costs) / len(base_costs))
         print(f"  ADAPT-AI is {ratio:.1f}× more expensive per question than Baseline")
 
-    # ── per-agent cost breakdown ───────────────────────────────────────────────
+    #  per-agent cost breakdown ─
     agent_totals: dict[str, list[float]] = {}
     for r in results:
         usage = r["adapt_ai"].get("llm_usage") or {}
@@ -362,7 +531,7 @@ def main() -> None:
             avg = sum(costs) / n
             print(f"    {agent:<20} ${avg:.6f}/q  ({len(costs)} calls total)")
 
-    # ── JSON report ───────────────────────────────────────────────────────────
+    #  JSON report ─
     report = {
         "n_questions": n,
         "aggregate": {
@@ -430,10 +599,11 @@ def main() -> None:
     }
 
     DATA_DIR.mkdir(parents=True, exist_ok=True)
-    REPORT_PATH.write_text(json.dumps(report, indent=2), encoding="utf-8")
-    print(f"\n[Saved JSON report → {REPORT_PATH}]")
+    report["domain"] = domain
+    report_path.write_text(json.dumps(report, indent=2), encoding="utf-8")
+    print(f"\n[Saved JSON report → {report_path}]")
 
-    # ── Markdown summary ──────────────────────────────────────────────────────
+    #  Markdown summary 
     def cat_row(cat: str) -> str:
         d = cat_data.get(cat, {})
         return (
@@ -455,10 +625,11 @@ def main() -> None:
     a_hall = agg_data["adapt_ai"].get("hallucinations", {})
     b_hall = agg_data["baseline"].get("hallucinations", {})
 
-    md = f"""# Clinical Reasoning Benchmark Summary
+    md = f"""# {domain.title()} Reasoning Benchmark Summary
 
+**Domain**: `{domain}`
 **Model**: `{settings.model_name}`
-**Questions**: {n} open-ended clinical queries across 5 categories
+**Questions**: {n} open-ended queries across {len(CATEGORIES)} categories
 
 ## Aggregate Metrics
 
@@ -487,8 +658,8 @@ def main() -> None:
 
 {total_rat}/{n} ({total_rat/n*100:.1f}%) of ADAPT-AI queries were routed to RAT.
 
-Complex reasoning, differential diagnosis, and treatment planning queries typically
-trigger RAT (keyword detection + vignette length heuristic in `router.py`).
+Complex-reasoning and vignette-style queries typically trigger RAT (per-domain keyword
+sets + vignette length heuristic in `router.py`).
 
 ## Response Time
 
@@ -510,26 +681,26 @@ trigger RAT (keyword detection + vignette length heuristic in `router.py`).
 
 ## Evaluation Notes
 
-**Scoring methodology** (ClinicalEvaluator, `evaluation/metrics.py`):
+**Scoring methodology** (ResponseEvaluator, `evaluation/metrics.py`):
 - **Overall score** = weighted composite: 20% BLEU-4 + 10% ROUGE-L + 40% concept recall + 20% safety score − 10% per critical omission − 10% per hallucination pattern match
 - **Concept recall** = fraction of `required_concepts` present in the response (word-boundary matching)
-- **Safety score** = 1.0 minus 0.2 per dangerous keyword pattern detected; ADAPT-AI's consistent 0.993 vs Baseline's 0.820 floor reflects the structural difference: ADAPT-AI's `aggregate_response` node always appends a mandatory clinical disclaimer, which the single-call baseline omits
+- **Safety score** = 1.0 minus 0.2 per dangerous keyword pattern detected; ADAPT-AI's `aggregate_response` node always appends the active domain's mandatory disclaimer, which the single-call baseline omits
 - **Hallucinations** = count of `hallucination_patterns` (false-premise confirmations) found in the response
 
-**Dataset**: `data/evaluation/clinical_reasoning_benchmark.json` (30 queries, 6 per category)
+**Dataset**: `data/evaluation/{RESULTS_FILES[domain].replace('_benchmark_results', '_reasoning_benchmark').replace('clinical_benchmark_results', 'clinical_reasoning_benchmark')}` ({n} queries)
 
-**ADAPT-AI pipeline** (LangGraph + FastMCP):
-1. `intent_and_retrieve` — routes to RAT or RAG via `should_use_rat()` in `orchestrator/router.py`
-2. `primary_agent` — clinical reasoning with retrieved context
-3. `compliance_agent` — rule-based HIPAA/FDA check
-4. `quality_agent` — hallucination detection; one retry loop if score < 0.85
-5. `aggregate_response` — merges outputs + medical disclaimer
+**ADAPT-AI pipeline** (LangGraph + FastMCP), domain = `{domain}`:
+1. `intent_and_retrieve` - routes to RAT or RAG via `should_use_rat()` in `orchestrator/router.py`
+2. `primary_agent` - domain reasoning with retrieved context (persona from the DomainProfile)
+3. `compliance_agent` - rule-based regulatory check (`{domain}.json` rule set)
+4. `quality_agent` - hallucination detection; one retry loop if score < 0.85
+5. `aggregate_response` - merges outputs + the domain disclaimer
 
-**Baseline**: single `{settings.model_name}` call with a clinical expert system prompt.
+**Baseline**: single `{settings.model_name}` call with a `{domain}` expert system prompt.
 """
 
-    SUMMARY_PATH.write_text(md, encoding="utf-8")
-    print(f"[Saved Markdown summary → {SUMMARY_PATH}]")
+    summary_path.write_text(md, encoding="utf-8")
+    print(f"[Saved Markdown summary → {summary_path}]")
 
 
 if __name__ == "__main__":

@@ -7,7 +7,7 @@ langchain-anthropic>=0.1.0
 langgraph>=0.2.0
 langsmith>=0.1.0
 
-# MCP (Model Context Protocol) — official Anthropic SDK
+# MCP (Model Context Protocol) - official Anthropic SDK
 mcp>=1.0.0
 
 # Web framework
@@ -30,13 +30,6 @@ sentence-transformers>=2.2.2
 # Data Models & Validation
 pydantic>=2.6.0
 pydantic-settings>=2.1.0
-
-# UI & Visualization
-streamlit>=1.35.0,<1.52  # 1.52.1 breaks with all installed protobuf versions
-protobuf>=5.0,<6         # >=5 for opentelemetry-proto, <6 to stay with streamlit <1.52
-plotly>=5.18.0
-streamlit-mermaid>=0.1.0
-pandas>=2.2.0
 
 # Monitoring & Observability
 opentelemetry-api>=1.22.0
@@ -69,8 +62,11 @@ watchdog>=3.0.0
 # Evaluation & Metrics
 evaluate>=0.4.0
 rouge-score>=0.1.2
-sacrebleu>=2.3.1
+sacrebleu>=2.4.0
 bert-score>=0.3.13
-nltk>=3.8
+nltk>=3.8.1
 
-# For benchmarking/evaluation also install: pip install -r requirements-eval.txt
+# Benchmark construction & analysis (run_matrix / build_benchmark / analyze_results)
+datasets>=2.18.0          # build_benchmark.py - HF gold datasets
+scipy>=1.12.0             # analyze_results.py - Wilcoxon, effect sizes
+openai>=1.30.0            # Ollama (OpenAI-compatible) endpoint + optional GPT judge

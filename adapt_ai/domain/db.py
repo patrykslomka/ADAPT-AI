@@ -1,4 +1,4 @@
-"""Domain data store — PostgreSQL with JSON file fallback."""
+"""Domain data store - PostgreSQL with JSON file fallback."""
 from __future__ import annotations
 import json
 import logging
@@ -33,7 +33,7 @@ def _load_fallback_patients() -> List[Dict]:
 
 
 class DomainDB:
-    """Thin data access layer — PostgreSQL when available, JSON files otherwise."""
+    """Thin data access layer - PostgreSQL when available, JSON files otherwise."""
 
     _instance: "DomainDB | None" = None
 
@@ -44,7 +44,7 @@ class DomainDB:
                 import asyncpg  # noqa: F401
                 logger.info("PostgreSQL mode enabled")
             except ImportError:
-                logger.warning("asyncpg not installed — using JSON fallback")
+                logger.warning("asyncpg not installed - using JSON fallback")
                 self._use_fallback = True
 
     @classmethod

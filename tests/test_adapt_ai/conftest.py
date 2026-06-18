@@ -1,4 +1,4 @@
-"""Shared fakes for adapt_ai tests — no live Anthropic or MCP calls."""
+"""Shared fakes for adapt_ai tests - no live Anthropic or MCP calls."""
 from __future__ import annotations
 from types import SimpleNamespace
 from typing import Any
@@ -26,7 +26,7 @@ class _FakeMessages:
 
 
 class FakeAnthropic:
-    """Stand-in for anthropic.Anthropic — never touches the network."""
+    """Stand-in for anthropic.Anthropic - never touches the network."""
 
     def __init__(self, *args: Any, text: str = "ANSWER: A", **kwargs: Any) -> None:
         self.messages = _FakeMessages(text)
@@ -61,7 +61,7 @@ def fake_mcp() -> FakeMCPClient:
 
 
 class FakeProvider(LLMProvider):
-    """Stand-in for any LLMProvider — returns canned text, no network."""
+    """Stand-in for any LLMProvider - returns canned text, no network."""
 
     def __init__(self, text: str = "ANSWER: A", in_tok: int = 100, out_tok: int = 50) -> None:
         self.model = "fake-model"

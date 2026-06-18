@@ -1,4 +1,4 @@
-"""Centralised settings — reads from .env."""
+"""Centralised settings - reads from .env."""
 from typing import Optional
 from pathlib import Path
 from pydantic import SecretStr, Field
@@ -33,7 +33,7 @@ class Settings(BaseSettings):
     )
     postgres_fallback_json: bool = Field(True, alias="POSTGRES_FALLBACK_JSON")
 
-    # ChromaDB (vector store — reuses existing seeded collection)
+    # ChromaDB (vector store - reuses existing seeded collection)
     chroma_persist_dir: str = Field("./data/chroma_db", alias="CHROMA_PERSIST_DIR")
     chroma_collection: str = Field("clinical_knowledge", alias="CHROMA_COLLECTION")
 

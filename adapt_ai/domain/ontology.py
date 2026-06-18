@@ -127,7 +127,7 @@ class OntologyGraph:
         self._owl_path = owl_path
         self._rdf_graph = _load_graph(owl_path) if owl_path else None
         if self._rdf_graph is None and owl_path:
-            logger.warning("OntologyGraph: could not load %s — concept queries will return empty", owl_path)
+            logger.warning("OntologyGraph: could not load %s - concept queries will return empty", owl_path)
 
     @classmethod
     def for_domain(cls, profile) -> "OntologyGraph":

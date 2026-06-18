@@ -1,4 +1,4 @@
-"""Domain documents resource — serves ChromaDB documents via MCP resource protocol."""
+"""Domain documents resource - serves ChromaDB documents via MCP resource protocol."""
 from adapt_ai.domain.vector_store import VectorStore
 
 

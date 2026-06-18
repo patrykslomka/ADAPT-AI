@@ -1,6 +1,5 @@
 """Resume must re-run entries that errored; only fully-successful entries count as done."""
-from scripts.run_clinical_benchmark import _completed_ids as clinical_completed
-from scripts.run_medqa_benchmark import _completed_ids as medqa_completed
+from scripts.run_benchmark import _completed_ids as reasoning_completed
 
 
 def _results():
@@ -11,9 +10,5 @@ def _results():
     ]
 
 
-def test_clinical_completed_ids_excludes_errored():
-    assert clinical_completed(_results()) == {0}
-
-
-def test_medqa_completed_ids_excludes_errored():
-    assert medqa_completed(_results()) == {0}
+def test_reasoning_completed_ids_excludes_errored():
+    assert reasoning_completed(_results()) == {0}

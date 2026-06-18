@@ -1,5 +1,5 @@
 """The compliance agent must validate against the domain carried in state,
-not a hardcoded value — this is the prerequisite for config-only domain ports."""
+not a hardcoded value - this is the prerequisite for config-only domain ports."""
 import pytest
 
 from adapt_ai.agents.compliance import make_compliance_node

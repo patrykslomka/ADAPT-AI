@@ -1,10 +1,10 @@
-"""Multi-domain port coverage — healthcare / legal / finance.
+"""Multi-domain port coverage - healthcare / legal / finance.
 
 These tests lock the three production domain profiles, their regulation rule
 sets, the per-domain compliance validation tool, and per-domain routing.
 Proving legal+finance work through the *same* code paths as healthcare is the
 evidence that a new regulated domain is a config-only addition (zero agent-code
-changes — see also the Bar-3 guard in test_domain_profile.py).
+changes - see also the Bar-3 guard in test_domain_profile.py).
 """
 from __future__ import annotations
 import json
@@ -23,7 +23,7 @@ LABEL_KEYS = {"query", "context", "quality_context"}
 _VALID_SEVERITIES = {"critical", "high", "medium", "low"}
 
 
-# ── Profiles ──────────────────────────────────────────────────────────────────
+#  Profiles 
 
 @pytest.mark.parametrize("domain", DOMAINS)
 def test_profile_loads_and_is_complete(domain):
@@ -40,13 +40,13 @@ def test_profile_loads_and_is_complete(domain):
 
 
 def test_each_domain_has_a_distinct_vector_collection():
-    """Domains must not share a vector collection — they index different corpora."""
+    """Domains must not share a vector collection - they index different corpora."""
     get_domain_profile.cache_clear()
     collections = {d: get_domain_profile(d).vector_collection for d in DOMAINS}
     assert len(set(collections.values())) == len(DOMAINS), collections
 
 
-# ── Regulation rule sets ────────────────────────────────────────────────────────
+#  Regulation rule sets 
 
 @pytest.mark.parametrize("domain", DOMAINS)
 def test_regulations_file_exists_and_is_well_formed(domain):
@@ -66,7 +66,7 @@ def test_regulations_file_exists_and_is_well_formed(domain):
             re.compile(pattern)  # must be a valid regex or this raises
 
 
-# ── Compliance validation (the safety bar) — per domain ─────────────────────────
+#  Compliance validation (the safety bar) - per domain ─
 
 @pytest.mark.asyncio
 @pytest.mark.parametrize("domain", ["legal", "finance"])
@@ -117,7 +117,7 @@ async def test_clean_educational_text_passes(domain):
     assert not any(i["severity"] in {"critical", "high"} for i in result["issues"])
 
 
-# ── Routing — domain keyword sets drive RAT vs RAG ──────────────────────────────
+#  Routing - domain keyword sets drive RAT vs RAG 
 
 def test_legal_vignette_routes_to_rat():
     assert should_use_rat("The plaintiff sued the defendant for breach.", "legal") is True
