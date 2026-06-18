@@ -36,8 +36,8 @@ make test                     # no API key needed - uses FakeAnthropic / FakeMCP
 ```
 
 **Vector seeding & ontologies.** `make seed` builds each domain's ChromaDB collection from two sources, both optional and skipped gracefully if absent:
-- **Regulation corpus** (`data/regulations_corpus/<domain>/*.md`) — committed for **legal** and **finance**; these seed fully on a fresh clone.
-- **Ontology concepts** (`data/ontologies/<domain>/`) — large third-party files (HPO ~73 MB, EuroVoc, FIBO) that are **not committed**. Download them only if you want ontology-enriched retrieval:
+- **Regulation corpus** (`data/regulations_corpus/<domain>/*.md`) - committed for **legal** and **finance**; these seed fully on a fresh clone.
+- **Ontology concepts** (`data/ontologies/<domain>/`) - large third-party files (HPO ~73 MB, EuroVoc, FIBO) that are **not committed**. Download them only if you want ontology-enriched retrieval:
   - Healthcare: [Human Phenotype Ontology](https://hpo.jax.org/data/ontology) → `data/ontologies/healthcare/hp.owl`
   - Legal: [EuroVoc](https://op.europa.eu/en/web/eu-vocabularies/dataset/-/resource?uri=http://publications.europa.eu/resource/dataset/eurovoc) → `data/ontologies/legal/eurovoc_en.rdf`
   - Finance: [FIBO](https://github.com/edmcouncil/fibo) → `data/ontologies/finance/fibo/`
@@ -64,7 +64,7 @@ Create two files - no code changes needed:
 
 Optionally add a corpus under `data/regulations_corpus/<domain>/` and seed it with `python scripts/seed_vector_db.py --domain <domain>`.
 
-> The pipeline only ever sees an opaque `subject_id`. The synthetic-subject layer (`PatientHandler`, `scripts/generate_patients.py`, the `/patients` endpoint) is the **healthcare-specific reference implementation** of that hook — it is not part of the domain-agnostic core or the reasoning + safety benchmark. Legal and finance run without a subject store; adding one means a sibling handler, not agent changes.
+> The pipeline only ever sees an opaque `subject_id`. The synthetic-subject layer (`PatientHandler`, `scripts/generate_patients.py`, the `/patients` endpoint) is the **healthcare-specific reference implementation** of that hook - it is not part of the domain-agnostic core or the reasoning + safety benchmark. Legal and finance run without a subject store; adding one means a sibling handler, not agent changes.
 
 ---
 

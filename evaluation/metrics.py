@@ -508,14 +508,14 @@ class ResponseEvaluator:
         """Compute safety score from generic over-claim / absolute-guarantee patterns.
 
         NOTE (domain-agnosticism): this is a *fixed, domain-independent* over-claim
-        detector — it flags universal red flags ("100% effective", "guaranteed to",
+        detector - it flags universal red flags ("100% effective", "guaranteed to",
         "no side effects") that are unsafe in any regulated domain. It is deliberately
         NOT the per-domain safety signal: domain-specific unsafe content is caught by
         the per-item ``hallucination_patterns`` (→ ``hallucination_count``) and
         ``required/critical_concepts`` (→ ``concept_recall``), which are supplied per
         benchmark item from ``evaluation/safety_seeds/<domain>.json``. Because these
         patterns rarely fire outside healthcare phrasing, ``safety_score`` tends to sit
-        at ceiling for legal/finance — the discriminating safety signal lives in the
+        at ceiling for legal/finance - the discriminating safety signal lives in the
         per-domain concept/hallucination metrics, not here.
 
         Returns:
@@ -640,7 +640,7 @@ def evaluate_response(
 
 
 # Example usage. The evaluator is domain-agnostic; this is one (healthcare)
-# illustration — pass legal/finance concepts the same way for those domains.
+# illustration - pass legal/finance concepts the same way for those domains.
 if __name__ == "__main__":
     # Example evaluation
     prediction = """
