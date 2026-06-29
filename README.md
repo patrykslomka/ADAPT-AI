@@ -14,7 +14,7 @@ Three agents coordinate in a LangGraph pipeline:
 2. **Compliance** - validates the response against the domain's regulation rules. No LLM; pure regex. A critical violation kills the response immediately.
 3. **Quality** - scores the response for hallucinations and consistency. A failing score triggers one revision loop back to primary.
 
-All domain knowledge - agent personas, regulation rules, vector collections, routing keywords, disclaimers - lives in `adapt_ai/domain/profiles/<domain>.json`. The agent code contains **zero domain-specific literals** (enforced by a test). See [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) for the full design.
+All domain knowledge - agent personas, regulation rules, vector collections, routing keywords, disclaimers - lives in `adapt_ai/domain/profiles/<domain>.json`. The agent code contains **zero domain-specific literals** (enforced by a test).
 
 ---
 
