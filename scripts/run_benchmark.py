@@ -35,7 +35,7 @@ from adapt_ai.llmops.providers import get_provider
 from adapt_ai.orchestrator.client import build_mcp_client
 from adapt_ai.agents.graph import build_graph
 from adapt_ai.llmops.tracing import setup_tracing
-from adapt_ai.llmops.usage import get_accumulator
+from adapt_ai.llmops.usage import get_accumulator, _price_for
 from evaluation.metrics import ResponseEvaluator
 
 setup_tracing()
@@ -103,9 +103,6 @@ def build_baseline_prompt(variant: str, domain: str) -> str:
     raise ValueError(f"Not a single-call baseline variant: {variant!r}")
 
 
-HAIKU_INPUT_PRICE = 0.80 / 1_000_000
-HAIKU_OUTPUT_PRICE = 4.00 / 1_000_000
-
 SLEEP_BETWEEN_QUESTIONS = 1
 
 logging.basicConfig(level=logging.WARNING, format="%(levelname)s: %(message)s")
@@ -113,7 +110,10 @@ logger = logging.getLogger(__name__)
 
 
 def compute_cost(input_tokens: int, output_tokens: int) -> float:
-    return input_tokens * HAIKU_INPUT_PRICE + output_tokens * HAIKU_OUTPUT_PRICE
+    # Price the baseline at the active model's rate (Haiku/Sonnet/Qwen), so the
+    # cost column is correct in every matrix cell - not Haiku-hardcoded.
+    in_price, out_price = _price_for(settings.model_name)
+    return input_tokens * in_price + output_tokens * out_price
 
 
 def score_with_evaluator(
@@ -438,7 +438,10 @@ def main() -> None:
     args = parser.parse_args()
 
     domain = args.domain
-    dataset_path = DATA_DIR / DATASET_FILES[domain]
+    # BENCH_DATASET lets external-validity runs point at a converted dataset
+    # without overwriting the in-repo <domain>_reasoning_benchmark.json.
+    bench_dataset = os.environ.get("BENCH_DATASET")
+    dataset_path = Path(bench_dataset) if bench_dataset else DATA_DIR / DATASET_FILES[domain]
 
     bench_results_dir = os.environ.get("BENCH_RESULTS_DIR")
     if bench_results_dir:

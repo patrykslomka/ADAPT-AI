@@ -79,3 +79,5 @@ models/
 .claude
 CLAUDE.md
 docs/
+# External-validity datasets (TRIDENT/MedSafetyBench) - fetched on demand, not redistributed
+data/evaluation/external/

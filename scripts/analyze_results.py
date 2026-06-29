@@ -288,9 +288,14 @@ def main() -> None:
 
     domain = args.domain
 
-    results_path = DATA_DIR / RESULTS_FILES[domain]
-    report_path = DATA_DIR / REPORT_FILES[domain]
-    summary_path = DATA_DIR / SUMMARY_FILES[domain]
+    # BENCH_RESULTS_DIR (same env run_benchmark writes to) lets us analyse an
+    # external-validity run directory without copying files into DATA_DIR.
+    import os
+    _base = os.environ.get("BENCH_RESULTS_DIR")
+    base_dir = Path(_base) if _base else DATA_DIR
+    results_path = base_dir / RESULTS_FILES[domain]
+    report_path = base_dir / REPORT_FILES[domain]
+    summary_path = base_dir / SUMMARY_FILES[domain]
 
     if not results_path.exists():
         sys.exit(f"ERROR: {results_path} not found. "
