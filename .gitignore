@@ -29,7 +29,7 @@ wheels/
 # Database & Data
 *.db
 *.sqlite3
-data/
+data/*
 chroma_db/
 sessions/
 
@@ -39,6 +39,15 @@ data/evaluation/*
 !data/evaluation/*_reasoning_benchmark.json
 !data/evaluation/*_report.json
 !data/evaluation/*_summary.md
+!data/evaluation/*.tex
+!data/evaluation/paper_numbers.md
+# Internal benchmark result data for reproducibility (external/ stays ignored below)
+!data/evaluation/matrix/
+!data/evaluation/matrix/**
+!data/evaluation/ladder/
+!data/evaluation/ladder/**
+!data/evaluation/ablation/
+!data/evaluation/ablation/**
 !data/regulations_corpus/
 !data/regulations_corpus/**
 
@@ -79,5 +88,11 @@ models/
 .claude
 CLAUDE.md
 docs/
-# External-validity datasets (TRIDENT/MedSafetyBench) - fetched on demand, not redistributed
+
+# Paper-ready figures (override the global *.pdf/*.png/*.jpg ignore above; must come after it)
+!data/evaluation/figures/
+!data/evaluation/figures/**
+
+# External-validity datasets (TRIDENT/MedSafetyBench) - fetched on demand, not redistributed.
+# Must be the LAST data/evaluation rule so it re-ignores external/ after the keep-rules above.
 data/evaluation/external/

@@ -81,7 +81,7 @@ python scripts/analyze_results.py --domain healthcare           # paired stats +
 python scripts/build_benchmark.py --all                         # rebuild datasets from gold HF data
 ```
 
-Metrics live in `evaluation/metrics.py` (`ResponseEvaluator`): BLEU, ROUGE, BERTScore, plus concept recall, hallucination detection, and disclaimer-independent safety scoring. An optional independent LLM judge (`evaluation/judge.py`, Opus) provides corroboration; reference-based metrics are the headline.
+Metrics live in `evaluation/metrics.py` (`ResponseEvaluator`): BLEU, ROUGE, BERTScore, plus concept recall, hallucination detection, and disclaimer-independent safety scoring. All headline results are reference-based.
 
 ### Reproducing the cross-model matrix
 

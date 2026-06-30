@@ -1,0 +1,10 @@
+{
+  "domain": "healthcare",
+  "model": "claude-sonnet-4-6",
+  "baseline_variant": "b1_disclaimer",
+  "ablations": {
+    "quality": true,
+    "compliance": true,
+    "disclaimer": true
+  }
+}

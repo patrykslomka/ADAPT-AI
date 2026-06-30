@@ -19,8 +19,8 @@ from evaluation.metrics import ResponseEvaluator
 
 
 def _ev() -> ResponseEvaluator:
-    # No BERTScore / judge - pure lexical metrics, no network.
-    return ResponseEvaluator(use_bertscore=False, use_llm_judge=False)
+    # No BERTScore - pure lexical metrics, no network.
+    return ResponseEvaluator(use_bertscore=False)
 
 
 #  Hallucination: quoting-to-refute must NOT count ─

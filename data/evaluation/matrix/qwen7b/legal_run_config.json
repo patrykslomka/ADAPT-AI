@@ -1,0 +1,10 @@
+{
+  "domain": "legal",
+  "model": "qwen2.5:7b-instruct",
+  "baseline_variant": "b1_disclaimer",
+  "ablations": {
+    "quality": true,
+    "compliance": true,
+    "disclaimer": true
+  }
+}

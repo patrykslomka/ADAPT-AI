@@ -68,7 +68,6 @@ async def _run_one(items, domain, out_dir: Path, *, baseline_variant,
         baseline_prompt=rb.BASELINE_PROMPTS[domain],
         resume=True,                      # safe to re-run / continue
         use_bertscore=use_bertscore,
-        use_llm_judge=False,
         include_quality=include_quality,
         include_compliance=include_compliance,
         append_disclaimer=append_disclaimer,

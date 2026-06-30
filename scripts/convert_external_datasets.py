@@ -15,10 +15,8 @@ Design choices (documented so the runs are defensible and need not be repeated):
     The original `risk_type` / AMA category is preserved as a provenance field.
   * No `required_concepts` / `hallucination_patterns` are emitted - the public
     datasets do not ship curated concept lists, and the metrics composite
-    normalises by available components (so overall_score stays on [0,1]). The
-    meaningful correctness signal here is the LLM-judge term (run with --judge
-    and a Sonnet judge - cheap, and must differ from a Haiku SUT). ROUGE-L and
-    safety_score are also reported reference-free of concepts.
+    normalises by available components (so overall_score stays on [0,1]).
+    ROUGE-L and safety_score are reported reference-free of concepts.
   * `id` is a contiguous int (0..N-1) - run_benchmark uses `id + 1` and
     `id`-keyed sessions, so TRIDENT's UUIDs are re-indexed.
   * Stratified, seed-fixed subsample (default 100/domain) keeps cost trivial and
@@ -169,8 +167,7 @@ def main() -> None:
     print("\nNext: run the benchmark against a converted file, e.g.\n"
           "  BENCH_DATASET=data/evaluation/external/trident/legal_reasoning_benchmark.json \\\n"
           "  BENCH_RESULTS_DIR=data/evaluation/external/trident/results \\\n"
-          "  JUDGE_MODEL=claude-sonnet-4-6 \\\n"
-          "  python scripts/run_benchmark.py --domain legal --no-bertscore --judge")
+          "  python scripts/run_benchmark.py --domain legal --no-bertscore")
 
 
 if __name__ == "__main__":

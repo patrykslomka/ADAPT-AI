@@ -1,4 +1,4 @@
-"""Provider abstraction so the pipeline/baseline/judge are model-agnostic.
+"""Provider abstraction so the pipeline/baseline are model-agnostic.
 
 One synchronous `complete()` returning text + token counts. Two backends:
   - AnthropicProvider         - Anthropic Messages API (system is a top-level kwarg)

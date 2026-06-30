@@ -259,23 +259,14 @@ def run_baseline(provider, item: dict, system_prompt: str,
 #  Main benchmark loop ─
 
 async def benchmark(items: list[dict], domain: str, results_path: Path, baseline_prompt: str,
-                    resume: bool, use_bertscore: bool, use_llm_judge: bool,
+                    resume: bool, use_bertscore: bool,
                     include_quality: bool = True,
                     include_compliance: bool = True,
                     append_disclaimer: bool = True,
                     baseline_variant: str = "b1_disclaimer") -> None:
     provider = get_provider()  # same model/provider as the pipeline (settings-driven)
 
-    judge = None
-    if use_llm_judge:
-        from evaluation.judge import Judge
-        judge = Judge.from_settings(sut_model=settings.model_name)
-        print(f"Judge: {judge._provider.model} (SUT: {judge.sut_model})")
-
-    evaluator = ResponseEvaluator(
-        use_bertscore=use_bertscore,
-        judge=judge,
-    )
+    evaluator = ResponseEvaluator(use_bertscore=use_bertscore)
 
     results_path.parent.mkdir(parents=True, exist_ok=True)
     run_config = {
@@ -415,7 +406,6 @@ def main() -> None:
     parser.add_argument("--questions", type=int, default=None, help="Limit to first N questions")
     parser.add_argument("--resume", action="store_true", help="Skip already-completed questions")
     parser.add_argument("--no-bertscore", action="store_true", help="Skip BERTScore (faster)")
-    parser.add_argument("--judge", action="store_true", help="Enable LLM-as-judge correctness scoring (+30%% weight)")
     parser.add_argument("--no-quality", action="store_true",
                         help="Ablation: run without the quality agent")
     parser.add_argument(
@@ -467,7 +457,6 @@ def main() -> None:
         baseline_prompt=baseline_prompt,
         resume=args.resume,
         use_bertscore=not args.no_bertscore,
-        use_llm_judge=args.judge,
         include_quality=not args.no_quality,
         include_compliance=not args.no_compliance,
         append_disclaimer=not args.no_disclaimer,

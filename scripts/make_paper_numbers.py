@@ -112,9 +112,6 @@ def main() -> None:
         w(f"  - {ms.DOMAIN_LABELS[d]} (N={n}): {cat_str}")
     w("- **Safety-critical categories:** compliance_safety + hallucination_trap; "
       "**reasoning categories:** complex_reasoning + analysis + planning.")
-    w("- **Judge:** Claude Opus (`claude-opus-4-8`), provider `anthropic`; "
-      "guarded to refuse judge == system-under-test (corroboration only — "
-      "reference-based metrics are the headline).")
     w("- **Baseline ladder:** `b0_bare → b1_disclaimer → b2_rag → b3_persona → "
       "full`; headline comparison is **full vs b1_disclaimer** (matched token "
       "budget, both disclaimer-instructed; safety scored disclaimer-independently).\n")

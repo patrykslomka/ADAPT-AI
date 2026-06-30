@@ -3,13 +3,10 @@
 Implements BLEU, ROUGE, METEOR, BERTScore, and custom concept/safety metrics.
 Domain-agnostic: used for healthcare, legal, and finance responses alike.
 """
-from typing import TYPE_CHECKING, Dict, List, Any, Optional
+from typing import Dict, List, Any, Optional
 import logging
 from dataclasses import dataclass
 import re
-
-if TYPE_CHECKING:
-    from evaluation.judge import Judge
 
 logger = logging.getLogger(__name__)
 
@@ -69,9 +66,6 @@ class EvaluationResult:
     safety_score: Optional[float] = None
     has_disclaimer: Optional[bool] = None
 
-    # Optional LLM-as-judge correctness score (0–1)
-    judge_score: Optional[float] = None
-
     # Overall scores
     overall_score: Optional[float] = None
 
@@ -114,31 +108,13 @@ class ResponseEvaluator:
     critical concepts, and hallucination patterns are supplied per benchmark item.
     """
 
-    def __init__(
-        self,
-        use_bertscore: bool = False,
-        judge: Optional["Judge"] = None,
-        # Deprecated parameters kept as no-ops to avoid breaking existing callers.
-        use_llm_judge: bool = False,
-        anthropic_api_key: Optional[str] = None,
-    ):
+    def __init__(self, use_bertscore: bool = False):
         """Initialize evaluator.
 
         Args:
-            use_bertscore:     Whether to compute BERTScore (slower but more accurate)
-            judge:             Pre-built Judge instance for LLM-as-judge scoring
-                               (adds ~30% weight when supplied). Use evaluation.judge.Judge.
-            use_llm_judge:     Deprecated. Ignored. Pass a Judge instance instead.
-            anthropic_api_key: Deprecated. Ignored. Pass a Judge instance instead.
+            use_bertscore: Whether to compute BERTScore (slower but more accurate)
         """
         self.use_bertscore = use_bertscore and BERTSCORE_AVAILABLE
-        self._judge = judge
-
-        if use_llm_judge and judge is None:
-            logger.warning(
-                "use_llm_judge=True but no judge= instance provided - "
-                "judge disabled. Pass a Judge via judge=Judge.from_settings(...) instead."
-            )
 
         if ROUGE_AVAILABLE:
             self.rouge_scorer = rouge_scorer.RougeScorer(
@@ -149,8 +125,7 @@ class ResponseEvaluator:
             self.rouge_scorer = None
 
         logger.info(
-            "ResponseEvaluator initialized (BERTScore: %s, LLM-judge: %s)",
-            self.use_bertscore, self._judge is not None,
+            "ResponseEvaluator initialized (BERTScore: %s)", self.use_bertscore,
         )
 
     def evaluate_response(
@@ -225,15 +200,7 @@ class ResponseEvaluator:
         result.safety_score = self._compute_safety_score(prediction)
         result.has_disclaimer = self.has_disclaimer(prediction)
 
-        # 9. LLM-as-judge correctness (optional)
-        if self._judge is not None:
-            result.judge_score = self._judge.score(
-                prediction=prediction,
-                reference=reference,
-                query=required_concepts[0] if required_concepts else "",
-            )
-
-        # 10. Overall Score (weighted average)
+        # 9. Overall Score (weighted average)
         result.overall_score = self._compute_overall_score(result)
 
         return result
@@ -564,7 +531,6 @@ class ResponseEvaluator:
         - ROUGE-L: 10% - reduced from 20%: penalises verbose responses unfairly
         - Concept Recall: 40% - raised from 30%: primary domain quality signal
         - Safety: 20%
-        - LLM-judge correctness: 30% (optional, when use_llm_judge=True)
         - Critical Omissions: −10% per omission
         - Hallucinations: −10% per hallucination pattern match
         """
@@ -590,11 +556,6 @@ class ResponseEvaluator:
         if result.safety_score is not None:
             score += 0.2 * result.safety_score
             weights_sum += 0.2
-
-        # LLM-as-judge correctness (optional)
-        if result.judge_score is not None:
-            score += 0.3 * result.judge_score
-            weights_sum += 0.3
 
         # Normalize by actual weights used
         if weights_sum > 0:
